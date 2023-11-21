@@ -2,10 +2,32 @@
 #define NODE_H
 
 enum TypeData {
-    TYPE_NAN = -1,
+    TYPE_ERR = -1,
     TYPE_NUM =  1,
     TYPE_OP  =  2,
 };
+
+enum TypeOP {
+    OP_ERR = -1,
+    OP_ADD =  1,
+    OP_SUB =  2,
+    OP_MUL =  3,
+    OP_DIV =  4,
+};
+
+struct OP {
+    TypeOP type_op;
+    const char* name;
+};
+
+const OP OPs[] = {
+    {OP_ERR, "$"},
+    {OP_ADD, "+"},
+    {OP_SUB, "-"},
+    {OP_MUL, "*"},
+    {OP_DIV, "/"},
+};
+const int COUNT_OPs = sizeof(OPs) / sizeof(OP);
 
 struct Node {
     TypeData type_value;

@@ -1,5 +1,7 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "Diff.h"
 
@@ -11,6 +13,7 @@ enum Branch {
 const int MAX_SIZE_INPUT = 100;
 const int POISON_VALUE = -0xbe;
 
+static ErrorCode get_arg(char** buf, char* str);
 static char* skip_spaces(char* s);
 static char* skip_word  (char* s);
 
@@ -33,18 +36,19 @@ ErrorCode tree_read(Tree** tree, char** buf)
         *buf = skip_spaces(*buf);
 
         char str[MAX_SIZE_INPUT] = "";
-        int i = 0;
-        while ((*buf)[i] != '\0') {
-            if (isspace((*buf)[i])) break;
-
-            str[i] = (*buf)[i];
-            i++;
+        err = get_arg(buf, str);
+        if (err) return err;
+        
+        int is_op = 0;
+        for (int i = 0; i < COUNT_OPs; i++) {
+            if (strcmp(OPs[i].name, str) == 0) {
+                is_op = 1;
+                (*tree)->node.value = OPs[i].type_op;
+                break;
+            }
         }
-        i++;
-        str[i] = '\0';
-
-        (*tree)->node.value = atoi(str);
-        (*buf) += i;
+        if (!is_op)
+            (*tree)->node.value = atoi(str);
 
         *buf = skip_spaces(*buf);
         err = tree_read(&(*tree)->right, buf);
@@ -53,11 +57,28 @@ ErrorCode tree_read(Tree** tree, char** buf)
 
         return tree_verify(*tree);
     } else {
-        printf("str nill = %s\n", *buf);
         *buf = skip_word(*buf); 
         return ERROR_NO;
     }
 
+    return ERROR_NO;
+}
+
+static ErrorCode get_arg(char** buf, char* str)
+{
+    assert(buf);
+    assert(*buf);
+    assert(str);
+
+    int i = 0;
+    while ((*buf)[i] != '\0' && !isspace((*buf)[i])) {
+        str[i] = (*buf)[i];
+        i++;
+    }
+    i++;
+    str[i] = '\0';
+
+    (*buf) += i;
     return ERROR_NO;
 }
 
@@ -84,7 +105,7 @@ ErrorCode tree_init(Tree** tree)
     *tree = (Tree*)calloc(1, sizeof(Tree));
     if (!*tree) return ERROR_ALLOC_FAIL;
 
-    (*tree)->node.type_value = TYPE_NAN;
+    (*tree)->node.type_value = TYPE_ERR;
     (*tree)->node.value = POISON_VALUE;
 
     return ERROR_NO;

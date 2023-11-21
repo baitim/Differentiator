@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <cstdlib>
+#include <math.h>
 
 #include "ANSI_colors.h"
 #include "Output.h"
@@ -7,10 +8,12 @@
 
 const int MAX_SIZE_NAME_DUMP = 50;
 const int MAX_SIZE_COMMAND = 100;
+const double EPSILON = 1e-9;
 
 static ErrorCode tree_cmd_dump_(Tree* tree, int dep);
 static ErrorCode tree_graph_dump_make_node(Tree* tree, FILE *dump_file, int dep);
 static ErrorCode tree_graph_dump_make_edge(Tree* tree, FILE *dump_file);
+static int is_double_equal(double x, double y);
 
 ErrorCode tree_cmd_dump(Tree* tree)
 {
@@ -39,8 +42,14 @@ static ErrorCode tree_cmd_dump_(Tree* tree, int dep)
     if (tree->left) tree_cmd_dump_(tree->left, dep + 1);
 
     for (int i = 0; i < dep; i++) printf("\t");
-    if (!tree->left && !tree->right)    printf(print_lgreen("%lf\n"), tree->node.value);
-    else                                printf(print_lyellow("%lf\n"), tree->node.value);
+    if (!tree->left && !tree->right) {
+        printf(print_lgreen("%.2lf\n"), tree->node.value);
+    } else {
+        for (int i = 0; i < COUNT_OPs; i++) {
+            if (is_double_equal(OPs[i].type_op, tree->node.value))
+                printf(print_lyellow("%s\n"), OPs[i].name);
+        }
+    }
 
     if (tree->right) tree_cmd_dump_(tree->right, dep + 1);
 
@@ -126,17 +135,18 @@ static ErrorCode tree_graph_dump_make_node(Tree* tree, FILE* dump_file, int dep)
     if (tree->left) tree_graph_dump_make_node(tree->left, dump_file, dep + 1);
 
     fprintf(dump_file, "\t{ \n"
-                       "\t\tnode[shape = \"Mrecord\"];\n");
-
-    fprintf(dump_file, "\t\tnode%p[label = \"{ %lf | {", tree, tree->node.value);
-    if (tree->left) fprintf(dump_file, "%lf", tree->left->node.value);
-    else            fprintf(dump_file, "0");
-    fprintf(dump_file, " | ");
-    if (tree->right)fprintf(dump_file, "%lf", tree->right->node.value);
-    else            fprintf(dump_file, "0");
-    fprintf(dump_file, "} }\"];\n");
-
-    fprintf(dump_file, "\t}\n");
+                       "\t\tnode[shape = \"Mrecord\"];\n"
+                       "\t\tnode%p[label = \"{ ", tree);
+    if (!tree->left && !tree->right) {
+        fprintf(dump_file, "%.2lf\n", tree->node.value);
+    } else {
+        for (int i = 0; i < COUNT_OPs; i++) {
+            if (is_double_equal(OPs[i].type_op, tree->node.value))
+                fprintf(dump_file, "%s\n", OPs[i].name);
+        }
+    }
+    fprintf(dump_file, " }\"];\n"
+                       "\t}\n");
 
     if (tree->right) tree_graph_dump_make_node(tree->right, dump_file, dep + 1);
 
@@ -156,4 +166,9 @@ static ErrorCode tree_graph_dump_make_edge(Tree* tree, FILE* dump_file)
     if (tree->right) tree_graph_dump_make_edge(tree->right, dump_file);
 
     return tree_verify(tree);
+}
+
+static int is_double_equal(double x, double y)
+{
+    return (fabs(x - y) <= EPSILON);
 }
