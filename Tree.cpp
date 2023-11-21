@@ -4,18 +4,11 @@
 #include "Tree.h"
 #include "Diff.h"
 
-enum Branch {
-    BRANCH_LEFT =  -1,
-    BRANCH_RIGHT =  1,
-};
-
-ErrorCode tree_new(Tree** tree, Node* node)
+ErrorCode tree_new(Tree** tree)
 {
     if (!tree && !*tree) return ERROR_INVALID_TREE;
 
-    tree_insert(tree, node);
-
-    return tree_verify((*tree));
+    return ERROR_NO;
 }
 
 ErrorCode tree_delete(Tree* tree)

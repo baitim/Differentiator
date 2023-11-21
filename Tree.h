@@ -12,7 +12,7 @@ struct Tree {
     Tree* right;
 };
 
-ErrorCode tree_new      (Tree** tree, Node* node);
+ErrorCode tree_new      (Tree** tree);
 ErrorCode tree_delete   (Tree* tree);
 ErrorCode tree_verify   (Tree* tree);
 

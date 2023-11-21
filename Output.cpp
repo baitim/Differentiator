@@ -12,13 +12,6 @@ static ErrorCode tree_cmd_dump_(Tree* tree, int dep);
 static ErrorCode tree_graph_dump_make_node(Tree* tree, FILE *dump_file, int dep);
 static ErrorCode tree_graph_dump_make_edge(Tree* tree, FILE *dump_file);
 
-ErrorCode buf_to_file(const char* name_file, char** buf)
-{
-
-
-    return ERROR_NO;
-}
-
 ErrorCode tree_cmd_dump(Tree* tree)
 {
     if (!tree) return ERROR_INVALID_TREE;

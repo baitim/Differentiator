@@ -1,36 +1,80 @@
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "Diff.h"
 
+enum Branch {
+    BRANCH_LEFT =  -1,
+    BRANCH_RIGHT =  1,
+};
+
+const int MAX_SIZE_INPUT = 100;
 const int POISON_VALUE = -0xbe;
 
-ErrorCode tree_read(Tree** tree, const char* buf)
+static char* skip_spaces(char* s);
+static char* skip_word  (char* s);
+
+ErrorCode tree_read(Tree** tree, char** buf)
 {
     if (!tree) return ERROR_INVALID_TREE;
     if (!buf) return ERROR_INVALID_BUF;
 
+    ErrorCode err = ERROR_NO;
 
+    if ((*buf)[0] == '(') {
+        err = tree_init(tree);
+        if (err) return err;
+
+        (*buf)++;
+
+        *buf = skip_spaces(*buf);
+        err = tree_read(&(*tree)->left, buf);
+        if (err) return err;
+        *buf = skip_spaces(*buf);
+
+        char str[MAX_SIZE_INPUT] = "";
+        int i = 0;
+        while ((*buf)[i] != '\0') {
+            if (isspace((*buf)[i])) break;
+
+            str[i] = (*buf)[i];
+            i++;
+        }
+        i++;
+        str[i] = '\0';
+
+        (*tree)->node.value = atoi(str);
+        (*buf) += i;
+
+        *buf = skip_spaces(*buf);
+        err = tree_read(&(*tree)->right, buf);
+        if (err) return err;
+        *buf = skip_spaces(*buf);
+
+        return tree_verify(*tree);
+    } else {
+        printf("str nill = %s\n", *buf);
+        *buf = skip_word(*buf); 
+        return ERROR_NO;
+    }
 
     return ERROR_NO;
 }
 
-ErrorCode tree_write(Tree** tree, const char* buf, int dep)
+static char* skip_spaces(char* s)
 {
-    if (!tree) return ERROR_INVALID_TREE;
-    if (!buf) return ERROR_INVALID_BUF;
-
-
-
-    return ERROR_NO;
+    int i = 0;
+    while (isspace(s[i]))
+        i++;
+    return &s[i];
 }
 
-ErrorCode tree_insert(Tree** tree, Node* node)
+static char* skip_word(char* s)
 {
-    if (!tree) return ERROR_INVALID_TREE;
-
-
-
-    return ERROR_NO;
+    int i = 0;
+    while (s[i] != '\0' && !isspace(s[i]))
+        i++;
+    return &s[i];
 }
 
 ErrorCode tree_init(Tree** tree)

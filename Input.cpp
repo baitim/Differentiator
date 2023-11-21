@@ -23,7 +23,7 @@ ErrorCode file_to_buf(const char* name_file, char** buf)
     *buf = (char *)calloc(size_file, sizeof(char));
     if (!(*buf)) return ERROR_ALLOC_FAIL;
 
-    int count_read = fread(*buf, sizeof(char), size_file, data_file);
+    int count_read = (int)fread(*buf, sizeof(char), size_file, data_file);
     if (count_read != size_file - 1) return ERROR_READ_FILE;
     (*buf)[size_file - 1] = '\0';
 
