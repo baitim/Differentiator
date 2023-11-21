@@ -8,6 +8,8 @@ ErrorCode tree_new(Tree** tree)
 {
     if (!tree && !*tree) return ERROR_INVALID_TREE;
 
+    (*tree)->size = 0;
+
     return ERROR_NO;
 }
 

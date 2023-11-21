@@ -138,15 +138,17 @@ static ErrorCode tree_graph_dump_make_node(Tree* tree, FILE* dump_file, int dep)
                        "\t\tnode[shape = \"Mrecord\"];\n"
                        "\t\tnode%p[label = \"{ ", tree);
     if (!tree->left && !tree->right) {
-        fprintf(dump_file, "%.2lf\n", tree->node.value);
+        fprintf(dump_file, "%.2lf", tree->node.value);
+        fprintf(dump_file, " }\", fillcolor = \"#ab5b0f\"];\n");
     } else {
         for (int i = 0; i < COUNT_OPs; i++) {
-            if (is_double_equal(OPs[i].type_op, tree->node.value))
-                fprintf(dump_file, "%s\n", OPs[i].name);
+            if (is_double_equal(OPs[i].type_op, tree->node.value)) {
+                fprintf(dump_file, "%s", OPs[i].name);
+                fprintf(dump_file, " }\", fillcolor = \"#e3964d\"];\n");
+            }
         }
     }
-    fprintf(dump_file, " }\"];\n"
-                       "\t}\n");
+    fprintf(dump_file, "\t}\n");
 
     if (tree->right) tree_graph_dump_make_node(tree->right, dump_file, dep + 1);
 

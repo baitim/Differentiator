@@ -4,8 +4,6 @@
 #include "Errors.h"
 #include "Tree.h"
 
-ErrorCode tree_read     (Tree** tree, char** buf);
-ErrorCode tree_write    (Tree** tree, char* buf, int dep);
-ErrorCode tree_init     (Tree** tree);
+ErrorCode tree_eval(Tree* tree, double* ans_eval);
 
 #endif // DIFF_H

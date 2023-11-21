@@ -7,6 +7,7 @@
 #include "Node.h"
 
 struct Tree {
+    int size;
     Node node;
     Tree* left;
     Tree* right;
