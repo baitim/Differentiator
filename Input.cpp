@@ -14,6 +14,10 @@ const int POISON_VALUE = -0xbe;
 
 static ErrorCode fsize  (const char* name_file, int* size_file);
 static ErrorCode get_arg(char** buf, char* str);
+static ErrorCode check_type_arg(char* str, TypeData* type_arg);
+static ErrorCode is_operator(char* str, int* is_oper);
+static ErrorCode is_number  (char* str, int* is_num);
+static ErrorCode is_variable(char* str, int* is_var);
 static char* skip_spaces(char* s);
 static char* skip_word  (char* s);
 
@@ -41,19 +45,26 @@ ErrorCode tree_read(Node** node, char** buf, int* childs, int *dep)
         char str[MAX_SIZE_INPUT] = "";
         err = get_arg(buf, str);
         if (err) return err;
+
+        TypeData type_arg = TYPE_ERR;
+        err = check_type_arg(str, &type_arg);
+        if (err || type_arg == TYPE_ERR) return err;
         
-        int is_op = 0;
-        for (int i = 0; i < COUNT_OPs; i++) {
-            if (strcmp(OPs[i].name, str) == 0) {
-                is_op = 1;
-                (*node)->value = OPs[i].type_op;
-                (*node)->type_value = TYPE_OP;
-                break;
+        if (type_arg == TYPE_OP) {
+            for (int i = 0; i < COUNT_OPs; i++) {
+                if (strcmp(OPs[i].name, str) == 0) {
+                    (*node)->value = OPs[i].type_op;
+                    (*node)->type_value = TYPE_OP;
+                    break;
+                }
             }
         }
-        if (!is_op) {
+        if (type_arg == TYPE_NUM) {
             (*node)->value = atoi(str);
             (*node)->type_value = TYPE_NUM;
+        }
+        if (type_arg == TYPE_VAR) {
+
         }
 
         (*childs)++;
@@ -94,6 +105,75 @@ static ErrorCode get_arg(char** buf, char* str)
 
     (*buf) += i;
     return ERROR_NO;
+}
+
+static ErrorCode check_type_arg(char* str, TypeData* type_arg)
+{
+    assert(str);
+    ErrorCode err = ERROR_NO;
+    int is_oper = 0;
+    err = is_operator(str, &is_oper);
+    if (err) return err;
+    if (is_oper) {
+        (*type_arg) = TYPE_OP;
+        return ERROR_NO;
+    }
+    int is_num =  0;
+    err = is_number(str, &is_num);
+    if (err) return err;
+    if (is_num) {
+        (*type_arg) = TYPE_NUM;
+        return ERROR_NO;
+    }
+    int is_var =  0;
+    err = is_variable(str, &is_var);
+    if (err) return err;
+    if (is_var) {
+        (*type_arg) = TYPE_VAR;
+        return ERROR_NO;
+    }
+
+    (*type_arg) = TYPE_ERR;
+    return ERROR_NO;
+}
+
+static ErrorCode is_operator(char* str, int* is_oper)
+{
+    for (int i = 0; i < COUNT_OPs; i++) {
+        if (strcmp(OPs[i].name, str) == 0) {
+            (*is_oper) = 1;
+            break;
+        }
+    }
+    return ERROR_NO;
+}
+
+static ErrorCode is_number(char* str, int* is_num)
+{
+    int i = 0;
+    while (str[i] != '\0' && !isspace(str[i])) {
+        if (str[i] < '0' || str[i] > '9') {
+            (*is_num) = 0;
+            return ERROR_NO;
+        }
+        i++;
+    }
+    (*is_num) = 1;
+}
+
+static ErrorCode is_variable(char* str, int* is_var)
+{
+    int i = 0;
+    while (str[i] != '\0' && !isspace(str[i])) {
+        for (int j = 0; j < sizeof(banned_chars); j++) {
+            if (str[i] == banned_chars[j]) {
+                (*is_var) = 0;
+                return ERROR_NO;
+            }
+        }
+        i++;
+    }
+    (*is_var) = 1;
 }
 
 static char* skip_spaces(char* s)
