@@ -6,7 +6,7 @@
 #include "Tree.h"
 #include "Errors.h"
 
-ErrorCode tree_read     (Tree** tree, char** buf, int* childs);
+ErrorCode tree_read     (Tree** tree, char** buf, int* childs, int *dep);
 ErrorCode tree_write    (Tree** tree, char* buf, int dep);
 ErrorCode tree_init     (Tree** tree);
 ErrorCode file_to_buf   (const char* name_file, char** buf);

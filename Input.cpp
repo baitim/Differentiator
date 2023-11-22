@@ -7,6 +7,8 @@
 
 #include "Input.h"
 
+#define MAX(a, b) ((a) > (b)) ? (a) : (b)
+
 const int MAX_SIZE_INPUT = 100;
 const int POISON_VALUE = -0xbe;
 
@@ -15,7 +17,7 @@ static ErrorCode get_arg(char** buf, char* str);
 static char* skip_spaces(char* s);
 static char* skip_word  (char* s);
 
-ErrorCode tree_read(Tree** tree, char** buf, int* childs)
+ErrorCode tree_read(Tree** tree, char** buf, int* childs, int *dep)
 {
     if (!tree) return ERROR_INVALID_TREE; 
     if (!buf) return ERROR_INVALID_BUF;
@@ -30,7 +32,8 @@ ErrorCode tree_read(Tree** tree, char** buf, int* childs)
 
         *buf = skip_spaces(*buf);
         int left_childs = 0;
-        err = tree_read(&(*tree)->left, buf, &left_childs);
+        int left_dep = 0;
+        err = tree_read(&(*tree)->left, buf, &left_childs, &left_dep);
         if (err) return err;
         *buf = skip_spaces(*buf);
         (*childs) += left_childs;
@@ -44,22 +47,27 @@ ErrorCode tree_read(Tree** tree, char** buf, int* childs)
             if (strcmp(OPs[i].name, str) == 0) {
                 is_op = 1;
                 (*tree)->node.value = OPs[i].type_op;
+                (*tree)->node.type_value = TYPE_OP;
                 break;
             }
         }
-        if (!is_op)
+        if (!is_op) {
             (*tree)->node.value = atoi(str);
+            (*tree)->node.type_value = TYPE_NUM;
+        }
 
         (*childs)++;
         /////////////////////////////////////////////////////////
         *buf = skip_spaces(*buf);
         int right_childs = 0;
-        err = tree_read(&(*tree)->right, buf, &right_childs);
+        int right_dep = 0;
+        err = tree_read(&(*tree)->right, buf, &right_childs, &right_dep);
         if (err) return err;
         *buf = skip_spaces(*buf);
         (*childs) += right_childs;
 
         (*tree)->size = (*childs) - 1;
+        (*dep) = (*tree)->dep = MAX(left_dep, right_dep) + 1;
 
         return ERROR_NO;
     } else {

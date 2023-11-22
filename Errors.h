@@ -19,6 +19,9 @@ enum ErrorCode {
     ERROR_INVALID_BUF =     1 << 8,
     ERROR_READ_FILE =       1 << 9,
     ERROR_COUNT_VALID =     1 << 10,
+    ERROR_TREE_LOOP =       1 << 11,
+    ERROR_TREE_DEP =        1 << 12,
+    ERROR_NUMBER_IS_OP =    1 << 13,
 };
 
 const Error ERRORS[] = {
@@ -34,6 +37,9 @@ const Error ERRORS[] = {
     {ERROR_INVALID_BUF,     "invalid pointer to buffer"},
     {ERROR_READ_FILE,       "cannot read file"},
     {ERROR_COUNT_VALID,     "wrong count of valid nodes"},
+    {ERROR_TREE_LOOP,       "tree has loop"},
+    {ERROR_TREE_DEP,        "wrong depth in tree"},
+    {ERROR_NUMBER_IS_OP,    "number not a leaf"},
 };
 const int COUNT_ERRORS = sizeof(ERRORS) / sizeof(Error);
 

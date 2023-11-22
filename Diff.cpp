@@ -6,6 +6,9 @@ ErrorCode tree_eval(Tree* tree, double* ans_eval)
 {
     if (!tree) return ERROR_INVALID_TREE;
 
+    ErrorCode err = tree_verify(tree);
+    if (err) return err;
+
     double left_eval =  -1;
     double right_eval = -1;
     if (tree->left)  tree_eval(tree->left,  &left_eval );

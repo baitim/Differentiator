@@ -8,6 +8,7 @@
 
 struct Tree {
     int size;
+    int dep;
     Node node;
     Tree* left;
     Tree* right;
