@@ -7,15 +7,11 @@
 #include "Node.h"
 
 struct Tree {
-    int size;
-    int dep;
-    Node node;
-    Tree* left;
-    Tree* right;
+    Node* root;
 };
 
 ErrorCode tree_new      (Tree** tree);
 ErrorCode tree_delete   (Tree* tree);
-ErrorCode tree_verify   (Tree* tree);
+ErrorCode tree_verify   (Node* node);
 
 #endif // TREE_H

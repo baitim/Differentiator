@@ -13,11 +13,15 @@ enum TypeNodeColor {
 
 const int POISON_INT = -1;
 
-static ErrorCode tree_verify_(Tree* tree, int *color, int num);
+static ErrorCode tree_delete_(Node* node);
+static ErrorCode tree_verify_(Node* node, int *color, int num);
 
 ErrorCode tree_new(Tree** tree)
 {
     if (!tree && !*tree) return ERROR_INVALID_TREE;
+
+    *tree = (Tree*)calloc(1, sizeof(Tree));
+    if (!*tree) return ERROR_ALLOC_FAIL;
 
     return ERROR_NO;
 }
@@ -26,39 +30,51 @@ ErrorCode tree_delete(Tree* tree)
 {
     if (!tree) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(tree);
+    ErrorCode err = tree_delete_(tree->root);
     if (err) return err;
-
-    if (tree->left) return tree_delete(tree->left);
-    if (tree->right) return tree_delete(tree->right);
-    
-    tree->size = POISON_INT;
-    tree->dep =  POISON_INT;
 
     free(tree);
     
     return ERROR_NO;
 }
 
-ErrorCode tree_verify(Tree* tree)
+static ErrorCode tree_delete_(Node* node) 
 {
-    assert(tree);
+    if (!node) return ERROR_INVALID_TREE;
 
-    ErrorCode err = ERROR_NO;
-
-    int count_nodes = (1 << tree->dep);
-    int* color = (int*)calloc(count_nodes, sizeof(int));
-    if (!color) return ERROR_ALLOC_FAIL;
-
-    err = tree_verify_(tree, color, 1);
+    ErrorCode err = tree_verify(node);
     if (err) return err;
+
+    if (node->left)  tree_delete_(node->left);
+    if (node->right) tree_delete_(node->right);
     
+    node->size = POISON_INT;
+    node->dep =  POISON_INT;
+
+    free(node);
     return ERROR_NO;
 }
 
-static ErrorCode tree_verify_(Tree* tree, int* color, int num)
+ErrorCode tree_verify(Node* node)
 {
-    assert(tree);
+    assert(node);
+
+    ErrorCode err = ERROR_NO;
+
+    int count_nodes = (1 << node->dep);
+    int* color = (int*)calloc(count_nodes, sizeof(int));
+    if (!color) return ERROR_ALLOC_FAIL;
+
+    err = tree_verify_(node, color, 1);
+    if (err) return err;
+    
+    free(color);
+    return ERROR_NO;
+}
+
+static ErrorCode tree_verify_(Node* node, int* color, int num)
+{
+    assert(node);
     assert(color);
 
     ErrorCode err = ERROR_NO;
@@ -66,27 +82,26 @@ static ErrorCode tree_verify_(Tree* tree, int* color, int num)
     if (color[num] == NODE_COLOR_BLACK) return ERROR_TREE_LOOP;
     color[num] = NODE_COLOR_BLACK;
 
-    if (tree->dep < 1) return ERROR_TREE_DEP;
-    if (tree->size < 0) return ERROR_COUNT_VALID;
-
-    if (tree->node.type_value == TYPE_NUM
-        && (tree->left || tree->right || tree->node.type_value != 1)) return ERROR_NUMBER_IS_OP;
+    if (node->dep < 1) return ERROR_TREE_DEP;
+    if (node->size < 0) return ERROR_COUNT_VALID;
 
     int next_dep = 0;
-    if (tree->left)  next_dep = MAX(tree->left->dep, next_dep);
-    if (tree->right) next_dep = MAX(tree->right->dep, next_dep);
+    if (node->left)  next_dep = MAX(node->left->dep, next_dep);
+    if (node->right) next_dep = MAX(node->right->dep, next_dep);
     next_dep++;
-    if (tree->node.type_value == TYPE_NUM && next_dep != 1) return ERROR_NUMBER_IS_OP;
-    if (next_dep != tree->dep) return ERROR_TREE_DEP;
+    if ((node->type_value == TYPE_NUM || node->type_value == TYPE_VAR) 
+        && next_dep != 1) return ERROR_LEAF;
+
+    if (next_dep != node->dep) return ERROR_TREE_DEP;
 
     int next_size = 0;
-    if (tree->left)  next_size += tree->left->size + 1;
-    if (tree->right) next_size += tree->right->size + 1;
-    if (next_size != tree->size) return ERROR_COUNT_VALID;
+    if (node->left)  next_size += node->left->size + 1;
+    if (node->right) next_size += node->right->size + 1;
+    if (next_size != node->size) return ERROR_COUNT_VALID;
 
-    if (tree->left)  err = tree_verify_(tree->left, color, num * 2);
+    if (node->left)  err = tree_verify_(node->left, color, num * 2);
     if (err) return err;
-    if (tree->right) err = tree_verify_(tree->right, color, num * 2 + 1);
+    if (node->right) err = tree_verify_(node->right, color, num * 2 + 1);
     if (err) return err;
 
     return ERROR_NO;

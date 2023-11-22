@@ -3,12 +3,12 @@
 
 #include <stdio.h>
 
-#include "Tree.h"
+#include "Node.h"
 #include "Errors.h"
 
-ErrorCode tree_read     (Tree** tree, char** buf, int* childs, int *dep);
-ErrorCode tree_write    (Tree** tree, char* buf, int dep);
-ErrorCode tree_init     (Tree** tree);
+ErrorCode tree_read     (Node** node, char** buf, int* childs, int *dep);
+ErrorCode tree_write    (Node** node, char* buf, int dep);
+ErrorCode node_init     (Node** node);
 ErrorCode file_to_buf   (const char* name_file, char** buf);
 
 #endif // INPUT_H

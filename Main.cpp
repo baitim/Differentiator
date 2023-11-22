@@ -9,7 +9,7 @@
 
 int main()
 {
-    printf(print_lblue("# Implementation of Tree.\n"
+    printf(print_lblue("# Implementation of Differentiator.\n"
                        "# (c) BAIDUSENOV TIMUR, 2023\n\n"));
     
     ErrorCode err = ERROR_NO;
@@ -31,7 +31,7 @@ int main()
     char* old_buf = buf_file;
     int childs = 0;
     int dep = 0;
-    err = tree_read(&tree, &buf_file, &childs, &dep);
+    err = tree_read(&tree->root, &buf_file, &childs, &dep);
     if (err) {
         err_dump(err);
         return err;
@@ -39,12 +39,12 @@ int main()
     free(old_buf);
 
     double ans_eval = -1;
-    err = tree_eval(tree, &ans_eval);
+    err = tree_eval(tree->root, &ans_eval);
     if (err) {
         err_dump(err);
         return err;
     }
-    printf("ans_eval = %lf\n", ans_eval);
+    printf(print_lcyan("ans_eval = %lf\n"), ans_eval);
 
     err = tree_cmd_dump(tree);
     if (err) {

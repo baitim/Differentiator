@@ -10,50 +10,50 @@ const int MAX_SIZE_NAME_DUMP = 50;
 const int MAX_SIZE_COMMAND = 100;
 const double EPSILON = 1e-9;
 
-static ErrorCode tree_cmd_dump_(Tree* tree, int dep);
-static ErrorCode tree_graph_dump_make_node(Tree* tree, FILE *dump_file, int dep);
-static ErrorCode tree_graph_dump_make_edge(Tree* tree, FILE *dump_file);
+static ErrorCode tree_cmd_dump_(Node* node, int dep);
+static ErrorCode tree_graph_dump_make_node(Node* node, FILE *dump_file, int dep);
+static ErrorCode tree_graph_dump_make_edge(Node* node, FILE *dump_file);
 static int is_double_equal(double x, double y);
 
 ErrorCode tree_cmd_dump(Tree* tree)
 {
     if (!tree) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(tree);
+    ErrorCode err = tree_verify(tree->root);
     if (err) return err;
 
     printf(print_magenta("^^^^^^^^^^^^^^^^^^^^\n\n"));
     printf(print_magenta("Tree:\n"));
 
-    tree_cmd_dump_(tree, 0);
+    tree_cmd_dump_(tree->root, 0);
 
     printf(print_magenta("vvvvvvvvvvvvvvvvvvvv\n\n"));
 
-    return tree_verify(tree);
+    return tree_verify(tree->root);
 }
 
-static ErrorCode tree_cmd_dump_(Tree* tree, int dep)
+static ErrorCode tree_cmd_dump_(Node* node, int dep)
 {
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!node) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(tree);
+    ErrorCode err = tree_verify(node);
     if (err) return err;
 
-    if (tree->left) tree_cmd_dump_(tree->left, dep + 1);
+    if (node->left) tree_cmd_dump_(node->left, dep + 1);
 
     for (int i = 0; i < dep; i++) printf("\t");
-    if (tree->dep == 1) {
-        printf(print_lgreen("%.2lf\n"), tree->node.value);
+    if (node->dep == 1) {
+        printf(print_lgreen("%.2lf\n"), node->value);
     } else {
         for (int i = 0; i < COUNT_OPs; i++) {
-            if (is_double_equal(OPs[i].type_op, tree->node.value))
+            if (is_double_equal(OPs[i].type_op, node->value))
                 printf(print_lyellow("%s\n"), OPs[i].name);
         }
     }
 
-    if (tree->right) tree_cmd_dump_(tree->right, dep + 1);
+    if (node->right) tree_cmd_dump_(node->right, dep + 1);
 
-    return tree_verify(tree);
+    return tree_verify(node);
 }
 
 ErrorCode tree_graph_dump(Tree* tree, int* number_graph_dump)
@@ -70,7 +70,7 @@ ErrorCode tree_graph_dump(Tree* tree, int* number_graph_dump)
     if (!tree)
         return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(tree);
+    ErrorCode err = tree_verify(tree->root);
     if (err) return err;
 
     fprintf(dump_file, "digraph {\n"
@@ -82,10 +82,10 @@ ErrorCode tree_graph_dump(Tree* tree, int* number_graph_dump)
                        "\tnode[shape = \"rectangle\", style = \"rounded, filled\", height = 3, width = 2, "
                        "fillcolor = \"#ab5b0f\", fontsize = 30, penwidth = 3.5, color = \"#941b1b\"]\n");
 
-    err = tree_graph_dump_make_node(tree, dump_file, 1);
+    err = tree_graph_dump_make_node(tree->root, dump_file, 1);
     if (err) return err;
 
-    err = tree_graph_dump_make_edge(tree, dump_file);
+    err = tree_graph_dump_make_edge(tree->root, dump_file);
     if (err) return err;
 
     fprintf(dump_file, "}\n");
@@ -99,7 +99,7 @@ ErrorCode tree_graph_dump(Tree* tree, int* number_graph_dump)
         return ERROR_SYSTEM_COMMAND;
 
     (*number_graph_dump)++;
-    return tree_verify(tree);
+    return tree_verify(tree->root);
 }
 
 ErrorCode tree_html_dump(int number_graph_dump)
@@ -125,51 +125,51 @@ ErrorCode tree_html_dump(int number_graph_dump)
     return ERROR_NO;
 }
 
-static ErrorCode tree_graph_dump_make_node(Tree* tree, FILE* dump_file, int dep)
+static ErrorCode tree_graph_dump_make_node(Node* node, FILE* dump_file, int dep)
 {
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!node) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(tree);
+    ErrorCode err = tree_verify(node);
     if (err) return err;
 
-    if (tree->left) tree_graph_dump_make_node(tree->left, dump_file, dep + 1);
+    if (node->left) tree_graph_dump_make_node(node->left, dump_file, dep + 1);
 
     fprintf(dump_file, "\t{ \n"
                        "\t\tnode[shape = \"Mrecord\"];\n"
-                       "\t\tnode%p[label = \"{ ", tree);
-    if (tree->dep == 1) {
-        fprintf(dump_file, "%.2lf", tree->node.value);
+                       "\t\tnode%p[label = \"{ ", node);
+    if (node->dep == 1) {
+        fprintf(dump_file, "%.2lf", node->value);
         fprintf(dump_file, " | { childs = %d | dep = %d } }\", fillcolor = \"#ab5b0f\"];\n",
-                           tree->size, tree->dep);
+                           node->size, node->dep);
     } else {
         for (int i = 0; i < COUNT_OPs; i++) {
-            if (is_double_equal(OPs[i].type_op, tree->node.value)) {
+            if (is_double_equal(OPs[i].type_op, node->value)) {
                 fprintf(dump_file, "%s", OPs[i].name);
                 fprintf(dump_file, " | { childs = %d | dep = %d }}\", fillcolor = \"#e3964d\"];\n",
-                                   tree->size, tree->dep);
+                                   node->size, node->dep);
             }
         }
     }
     fprintf(dump_file, "\t}\n");
 
-    if (tree->right) tree_graph_dump_make_node(tree->right, dump_file, dep + 1);
+    if (node->right) tree_graph_dump_make_node(node->right, dump_file, dep + 1);
 
-    return tree_verify(tree);
+    return tree_verify(node);
 }
 
-static ErrorCode tree_graph_dump_make_edge(Tree* tree, FILE* dump_file)
+static ErrorCode tree_graph_dump_make_edge(Node* node, FILE* dump_file)
 {
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!node) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(tree);
+    ErrorCode err = tree_verify(node);
     if (err) return err;
 
-    if (tree->left)  tree_graph_dump_make_edge(tree->left, dump_file);
-    if (tree->left)  fprintf(dump_file, "\tnode%p->node%p[color = yellow, labelangle = 45];\n", tree, tree->left);
-    if (tree->right) fprintf(dump_file, "\tnode%p->node%p[color = yellow, labelangle = 45];\n", tree, tree->right);
-    if (tree->right) tree_graph_dump_make_edge(tree->right, dump_file);
+    if (node->left)  tree_graph_dump_make_edge(node->left, dump_file);
+    if (node->left)  fprintf(dump_file, "\tnode%p->node%p[color = yellow, labelangle = 45];\n", node, node->left);
+    if (node->right) fprintf(dump_file, "\tnode%p->node%p[color = yellow, labelangle = 45];\n", node, node->right);
+    if (node->right) tree_graph_dump_make_edge(node->right, dump_file);
 
-    return tree_verify(tree);
+    return tree_verify(node);
 }
 
 static int is_double_equal(double x, double y)

@@ -17,15 +17,15 @@ static ErrorCode get_arg(char** buf, char* str);
 static char* skip_spaces(char* s);
 static char* skip_word  (char* s);
 
-ErrorCode tree_read(Tree** tree, char** buf, int* childs, int *dep)
+ErrorCode tree_read(Node** node, char** buf, int* childs, int *dep)
 {
-    if (!tree) return ERROR_INVALID_TREE; 
+    if (!node) return ERROR_INVALID_TREE; 
     if (!buf) return ERROR_INVALID_BUF;
 
     ErrorCode err = ERROR_NO;
 
     if ((**buf) == '(') {
-        err = tree_init(tree);
+        err = node_init(node);
         if (err) return err;
 
         (*buf)++;
@@ -33,7 +33,7 @@ ErrorCode tree_read(Tree** tree, char** buf, int* childs, int *dep)
         *buf = skip_spaces(*buf);
         int left_childs = 0;
         int left_dep = 0;
-        err = tree_read(&(*tree)->left, buf, &left_childs, &left_dep);
+        err = tree_read(&(*node)->left, buf, &left_childs, &left_dep);
         if (err) return err;
         *buf = skip_spaces(*buf);
         (*childs) += left_childs;
@@ -46,14 +46,14 @@ ErrorCode tree_read(Tree** tree, char** buf, int* childs, int *dep)
         for (int i = 0; i < COUNT_OPs; i++) {
             if (strcmp(OPs[i].name, str) == 0) {
                 is_op = 1;
-                (*tree)->node.value = OPs[i].type_op;
-                (*tree)->node.type_value = TYPE_OP;
+                (*node)->value = OPs[i].type_op;
+                (*node)->type_value = TYPE_OP;
                 break;
             }
         }
         if (!is_op) {
-            (*tree)->node.value = atoi(str);
-            (*tree)->node.type_value = TYPE_NUM;
+            (*node)->value = atoi(str);
+            (*node)->type_value = TYPE_NUM;
         }
 
         (*childs)++;
@@ -61,13 +61,13 @@ ErrorCode tree_read(Tree** tree, char** buf, int* childs, int *dep)
         *buf = skip_spaces(*buf);
         int right_childs = 0;
         int right_dep = 0;
-        err = tree_read(&(*tree)->right, buf, &right_childs, &right_dep);
+        err = tree_read(&(*node)->right, buf, &right_childs, &right_dep);
         if (err) return err;
         *buf = skip_spaces(*buf);
         (*childs) += right_childs;
 
-        (*tree)->size = (*childs) - 1;
-        (*dep) = (*tree)->dep = MAX(left_dep, right_dep) + 1;
+        (*node)->size = (*childs) - 1;
+        (*dep) = (*node)->dep = MAX(left_dep, right_dep) + 1;
 
         return ERROR_NO;
     } else {
@@ -112,15 +112,15 @@ static char* skip_word(char* s)
     return &s[i];
 }
 
-ErrorCode tree_init(Tree** tree)
+ErrorCode node_init(Node** node)
 {
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!node) return ERROR_INVALID_TREE;
     
-    *tree = (Tree*)calloc(1, sizeof(Tree));
-    if (!*tree) return ERROR_ALLOC_FAIL;
+    *node = (Node*)calloc(1, sizeof(Node));
+    if (!*node) return ERROR_ALLOC_FAIL;
 
-    (*tree)->node.type_value = TYPE_ERR;
-    (*tree)->node.value = POISON_VALUE;
+    (*node)->type_value = TYPE_ERR;
+    (*node)->value = POISON_VALUE;
 
     return ERROR_NO;
 }

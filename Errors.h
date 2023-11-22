@@ -21,7 +21,7 @@ enum ErrorCode {
     ERROR_COUNT_VALID =     1 << 10,
     ERROR_TREE_LOOP =       1 << 11,
     ERROR_TREE_DEP =        1 << 12,
-    ERROR_NUMBER_IS_OP =    1 << 13,
+    ERROR_LEAF =            1 << 14,
 };
 
 const Error ERRORS[] = {
@@ -39,7 +39,7 @@ const Error ERRORS[] = {
     {ERROR_COUNT_VALID,     "wrong count of valid nodes"},
     {ERROR_TREE_LOOP,       "tree has loop"},
     {ERROR_TREE_DEP,        "wrong depth in tree"},
-    {ERROR_NUMBER_IS_OP,    "number not a leaf"},
+    {ERROR_LEAF,            "leaf isn't number or variable"},
 };
 const int COUNT_ERRORS = sizeof(ERRORS) / sizeof(Error);
 
