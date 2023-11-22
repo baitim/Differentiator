@@ -15,6 +15,11 @@ int main()
     ErrorCode err = ERROR_NO;
     int number_graph_dump = 1;
     Tree* tree = nullptr;
+    err = tree_new(&tree);
+    if (err) {
+        err_dump(err);
+        return err;
+    }
     const char name_data_file[] = "equation.txt";
 
     char* buf_file = nullptr;
@@ -24,7 +29,8 @@ int main()
         return err;
     }
     char* old_buf = buf_file;
-    err = tree_read(&tree, &buf_file);
+    int childs = 0;
+    err = tree_read(&tree, &buf_file, &childs);
     if (err) {
         err_dump(err);
         return err;

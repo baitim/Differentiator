@@ -10,29 +10,31 @@
 const int MAX_SIZE_INPUT = 100;
 const int POISON_VALUE = -0xbe;
 
-static ErrorCode fsize(const char* name_file, int* size_file);
+static ErrorCode fsize  (const char* name_file, int* size_file);
 static ErrorCode get_arg(char** buf, char* str);
 static char* skip_spaces(char* s);
 static char* skip_word  (char* s);
 
-ErrorCode tree_read(Tree** tree, char** buf)
+ErrorCode tree_read(Tree** tree, char** buf, int* childs)
 {
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!tree) return ERROR_INVALID_TREE; 
     if (!buf) return ERROR_INVALID_BUF;
 
     ErrorCode err = ERROR_NO;
 
-    if ((*buf)[0] == '(') {
+    if ((**buf) == '(') {
         err = tree_init(tree);
         if (err) return err;
 
         (*buf)++;
 
         *buf = skip_spaces(*buf);
-        err = tree_read(&(*tree)->left, buf);
+        int left_childs = 0;
+        err = tree_read(&(*tree)->left, buf, &left_childs);
         if (err) return err;
         *buf = skip_spaces(*buf);
-
+        (*childs) += left_childs;
+        /////////////////////////////////////////////////////////
         char str[MAX_SIZE_INPUT] = "";
         err = get_arg(buf, str);
         if (err) return err;
@@ -48,12 +50,18 @@ ErrorCode tree_read(Tree** tree, char** buf)
         if (!is_op)
             (*tree)->node.value = atoi(str);
 
+        (*childs)++;
+        /////////////////////////////////////////////////////////
         *buf = skip_spaces(*buf);
-        err = tree_read(&(*tree)->right, buf);
+        int right_childs = 0;
+        err = tree_read(&(*tree)->right, buf, &right_childs);
         if (err) return err;
         *buf = skip_spaces(*buf);
+        (*childs) += right_childs;
 
-        return tree_verify(*tree);
+        (*tree)->size = (*childs) - 1;
+
+        return ERROR_NO;
     } else {
         *buf = skip_word(*buf); 
         return ERROR_NO;

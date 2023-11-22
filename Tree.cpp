@@ -4,11 +4,11 @@
 #include "Tree.h"
 #include "Diff.h"
 
+const int POISON_SIZE = -1;
+
 ErrorCode tree_new(Tree** tree)
 {
     if (!tree && !*tree) return ERROR_INVALID_TREE;
-
-    (*tree)->size = 0;
 
     return ERROR_NO;
 }
@@ -22,6 +22,8 @@ ErrorCode tree_delete(Tree* tree)
 
     if (tree->left) return tree_delete(tree->left);
     if (tree->right) return tree_delete(tree->right);
+    
+    tree->size = POISON_SIZE;
 
     free(tree);
     
@@ -31,6 +33,11 @@ ErrorCode tree_delete(Tree* tree)
 ErrorCode tree_verify(Tree* tree)
 {
     assert(tree);
+
+    int next_size = 0;
+    if (tree->left)  next_size += tree->left->size + 1;
+    if (tree->right) next_size += tree->right->size + 1;
+    if (next_size != tree->size) return ERROR_COUNT_VALID;
 
     if (tree->left)  return tree_verify(tree->left);
     if (tree->right) return tree_verify(tree->right);

@@ -18,6 +18,7 @@ enum ErrorCode {
     ERROR_INVALID_FILE =    1 << 7,
     ERROR_INVALID_BUF =     1 << 8,
     ERROR_READ_FILE =       1 << 9,
+    ERROR_COUNT_VALID =     1 << 10,
 };
 
 const Error ERRORS[] = {
@@ -32,6 +33,7 @@ const Error ERRORS[] = {
     {ERROR_INVALID_FILE,    "invalid pointer to file"},
     {ERROR_INVALID_BUF,     "invalid pointer to buffer"},
     {ERROR_READ_FILE,       "cannot read file"},
+    {ERROR_COUNT_VALID,     "wrong count of valid nodes"},
 };
 const int COUNT_ERRORS = sizeof(ERRORS) / sizeof(Error);
 

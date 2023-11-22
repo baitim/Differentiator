@@ -32,5 +32,5 @@ ErrorCode tree_eval(Tree* tree, double* ans_eval)
         }
     }
 
-    return ERROR_NO;
+    return tree_verify(tree);
 }
