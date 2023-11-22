@@ -6,9 +6,14 @@
 
 #define MAX(a, b) ((a) > (b)) ? (a) : (b)
 
+enum TypeNodeColor {
+    NODE_COLOR_WHITE = 0,
+    NODE_COLOR_BLACK = 1,
+};
+
 const int POISON_INT = -1;
 
-static ErrorCode tree_verify_(Tree* tree, int *color);
+static ErrorCode tree_verify_(Tree* tree, int *color, int num);
 
 ErrorCode tree_new(Tree** tree)
 {
@@ -41,19 +46,28 @@ ErrorCode tree_verify(Tree* tree)
 
     ErrorCode err = ERROR_NO;
 
-    int* color = (int*)calloc(MAX(tree->dep, 0), sizeof(int));
+    int count_nodes = (1 << tree->dep);
+    int* color = (int*)calloc(count_nodes, sizeof(int));
     if (!color) return ERROR_ALLOC_FAIL;
 
-    err = tree_verify_(tree, color);
+    err = tree_verify_(tree, color, 1);
     if (err) return err;
     
     return ERROR_NO;
 }
 
-static ErrorCode tree_verify_(Tree* tree, int* color)
+static ErrorCode tree_verify_(Tree* tree, int* color, int num)
 {
     assert(tree);
     assert(color);
+
+    ErrorCode err = ERROR_NO;
+
+    if (color[num] == NODE_COLOR_BLACK) return ERROR_TREE_LOOP;
+    color[num] = NODE_COLOR_BLACK;
+
+    if (tree->dep < 1) return ERROR_TREE_DEP;
+    if (tree->size < 0) return ERROR_COUNT_VALID;
 
     if (tree->node.type_value == TYPE_NUM
         && (tree->left || tree->right || tree->node.type_value != 1)) return ERROR_NUMBER_IS_OP;
@@ -70,8 +84,10 @@ static ErrorCode tree_verify_(Tree* tree, int* color)
     if (tree->right) next_size += tree->right->size + 1;
     if (next_size != tree->size) return ERROR_COUNT_VALID;
 
-    if (tree->left)  return tree_verify(tree->left);
-    if (tree->right) return tree_verify(tree->right);
+    if (tree->left)  err = tree_verify_(tree->left, color, num * 2);
+    if (err) return err;
+    if (tree->right) err = tree_verify_(tree->right, color, num * 2 + 1);
+    if (err) return err;
 
     return ERROR_NO;
 }

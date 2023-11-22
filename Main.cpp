@@ -38,13 +38,13 @@ int main()
     }
     free(old_buf);
 
-    // double ans_eval = -1;
-    // err = tree_eval(tree, &ans_eval);
-    // if (err) {
-    //     err_dump(err);
-    //     return err;
-    // }
-    // printf("ans_eval = %lf\n", ans_eval);
+    double ans_eval = -1;
+    err = tree_eval(tree, &ans_eval);
+    if (err) {
+        err_dump(err);
+        return err;
+    }
+    printf("ans_eval = %lf\n", ans_eval);
 
     err = tree_cmd_dump(tree);
     if (err) {
