@@ -21,12 +21,15 @@ enum ErrorCode {
     ERROR_COUNT_VALID =     1 << 10,
     ERROR_TREE_LOOP =       1 << 11,
     ERROR_TREE_DEP =        1 << 12,
-    ERROR_LEAF =            1 << 14,
+    ERROR_LEAF =            1 << 13,
+    ERROR_STRDUP =          1 << 14,
+    ERROR_INPUT_VARIABLE =  1 << 15,
+    ERROR_DIVIDED_NULL =    1 << 16,
 };
 
 const Error ERRORS[] = {
     {ERROR_NO,              "no errors"},
-    {ERROR_ALLOC_FAIL,      "realloc fail"},
+    {ERROR_ALLOC_FAIL,      "alloc fail"},
     {ERROR_INVALID_TREE,    "invalid pointer to tree"},
     {ERROR_SYSTEM_COMMAND,  "cannot process system command"},
     {ERROR_OPEN_FILE,       "invalid name of file"},
@@ -40,6 +43,9 @@ const Error ERRORS[] = {
     {ERROR_TREE_LOOP,       "tree has loop"},
     {ERROR_TREE_DEP,        "wrong depth in tree"},
     {ERROR_LEAF,            "leaf isn't number or variable"},
+    {ERROR_STRDUP,          "cannot strdup"},
+    {ERROR_INPUT_VARIABLE,  "variable has banned symbol"},
+    {ERROR_DIVIDED_NULL,    "division by zero is evalute"},
 };
 const int COUNT_ERRORS = sizeof(ERRORS) / sizeof(Error);
 

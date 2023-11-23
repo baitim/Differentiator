@@ -8,6 +8,7 @@
 
 struct Tree {
     Node* root;
+    Variables* variables;
 };
 
 ErrorCode tree_new      (Tree** tree);

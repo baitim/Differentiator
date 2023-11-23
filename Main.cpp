@@ -29,9 +29,7 @@ int main()
         return err;
     }
     char* old_buf = buf_file;
-    int childs = 0;
-    int dep = 0;
-    err = tree_read(&tree->root, &buf_file, &childs, &dep);
+    err = tree_read(tree, &buf_file);
     if (err) {
         err_dump(err);
         return err;
@@ -39,7 +37,7 @@ int main()
     free(old_buf);
 
     double ans_eval = -1;
-    err = tree_eval(tree->root, &ans_eval);
+    err = tree_eval(tree, &ans_eval);
     if (err) {
         err_dump(err);
         return err;

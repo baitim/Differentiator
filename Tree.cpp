@@ -11,7 +11,7 @@ enum TypeNodeColor {
     NODE_COLOR_BLACK = 1,
 };
 
-const int POISON_INT = -1;
+static const int POISON_INT = -1;
 
 static ErrorCode tree_delete_(Node* node);
 static ErrorCode tree_verify_(Node* node, int *color, int num);
@@ -23,6 +23,20 @@ ErrorCode tree_new(Tree** tree)
     *tree = (Tree*)calloc(1, sizeof(Tree));
     if (!*tree) return ERROR_ALLOC_FAIL;
 
+    (*tree)->variables = (Variables*)calloc(1, sizeof(Variables));
+    if (!(*tree)->variables) return ERROR_ALLOC_FAIL;
+
+    (*tree)->variables->names = (char**)calloc(DEFAULT_COUNT_VARIABLES, sizeof(char*));
+    if (!(*tree)->variables->names) return ERROR_ALLOC_FAIL;
+
+    (*tree)->variables->valid = (int*)calloc(DEFAULT_COUNT_VARIABLES, sizeof(int));
+    if (!(*tree)->variables->valid) return ERROR_ALLOC_FAIL;
+
+    (*tree)->variables->value = (double*)calloc(DEFAULT_COUNT_VARIABLES, sizeof(double));
+    if (!(*tree)->variables->value) return ERROR_ALLOC_FAIL;
+
+    (*tree)->variables->count = 0;
+
     return ERROR_NO;
 }
 
@@ -33,6 +47,13 @@ ErrorCode tree_delete(Tree* tree)
     ErrorCode err = tree_delete_(tree->root);
     if (err) return err;
 
+    for (int i = 0; i < tree->variables->count; i++)
+        free(tree->variables->names[i]);
+    tree->variables->count = POISON_INT;
+    free(tree->variables->names);
+    free(tree->variables->valid);
+    free(tree->variables->value);
+    free(tree->variables);
     free(tree);
     
     return ERROR_NO;

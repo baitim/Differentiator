@@ -15,11 +15,12 @@ void err_dump_(int err, const char* file, const char* func, int line)
     fprintf(stderr, print_lred("ERROR: called from FILE = %s, FUNCTION = %s, LINE = %d\n"), 
                                file, func, line);
 
-    int pow = 1;
-    for (int i = 1; i < COUNT_ERRORS; i++) {
+    int pow = 0;
+    for (int i = 0; i < COUNT_ERRORS; i++) {
         if (err & pow)
             print_error(err, ERRORS[i].description);
-        pow *= 2;
+        if (!pow)   pow++;
+        else        pow *= 2;
     }
 }
 

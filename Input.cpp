@@ -9,19 +9,34 @@
 
 #define MAX(a, b) ((a) > (b)) ? (a) : (b)
 
-const int MAX_SIZE_INPUT = 100;
-const int POISON_VALUE = -0xbe;
+static const int MAX_SIZE_INPUT = 500;
+static const int POISON_VALUE = -0xbe;
 
-static ErrorCode fsize  (const char* name_file, int* size_file);
-static ErrorCode get_arg(char** buf, char* str);
-static ErrorCode check_type_arg(char* str, TypeData* type_arg);
-static ErrorCode is_operator(char* str, int* is_oper);
-static ErrorCode is_number  (char* str, int* is_num);
-static ErrorCode is_variable(char* str, int* is_var);
-static char* skip_spaces(char* s);
-static char* skip_word  (char* s);
+static ErrorCode tree_read_     (Node** node, Variables* vars, char** buf, int* childs, int *dep);
+static ErrorCode fsize          (const char* name_file, int* size_file);
+static ErrorCode get_arg        (char** buf, char* str);
+static ErrorCode check_type_arg (char* str, TypeData* type_arg);
+static ErrorCode write_arg      (Node* node, Variables* vars, char* str, TypeData type_arg);
+static ErrorCode is_operator    (char* str, int* is_oper);
+static ErrorCode is_number      (char* str, int* is_num);
+static ErrorCode is_variable    (char* str, int* is_var);
+static char* skip_spaces        (char* s);
+static char* skip_word          (char* s);
 
-ErrorCode tree_read(Node** node, char** buf, int* childs, int *dep)
+ErrorCode tree_read(Tree* tree, char** buf)
+{
+    assert(buf);
+    if (!tree) return ERROR_INVALID_TREE;
+
+    int childs = 0;
+    int dep = 0;
+    ErrorCode err = tree_read_(&tree->root, tree->variables, buf, &childs, &dep);
+    if (err) return err;
+
+    return ERROR_NO;
+}
+
+static ErrorCode tree_read_(Node** node, Variables* vars, char** buf, int* childs, int *dep)
 {
     if (!node) return ERROR_INVALID_TREE; 
     if (!buf) return ERROR_INVALID_BUF;
@@ -37,7 +52,7 @@ ErrorCode tree_read(Node** node, char** buf, int* childs, int *dep)
         *buf = skip_spaces(*buf);
         int left_childs = 0;
         int left_dep = 0;
-        err = tree_read(&(*node)->left, buf, &left_childs, &left_dep);
+        err = tree_read_(&(*node)->left, vars, buf, &left_childs, &left_dep);
         if (err) return err;
         *buf = skip_spaces(*buf);
         (*childs) += left_childs;
@@ -49,30 +64,16 @@ ErrorCode tree_read(Node** node, char** buf, int* childs, int *dep)
         TypeData type_arg = TYPE_ERR;
         err = check_type_arg(str, &type_arg);
         if (err || type_arg == TYPE_ERR) return err;
-        
-        if (type_arg == TYPE_OP) {
-            for (int i = 0; i < COUNT_OPs; i++) {
-                if (strcmp(OPs[i].name, str) == 0) {
-                    (*node)->value = OPs[i].type_op;
-                    (*node)->type_value = TYPE_OP;
-                    break;
-                }
-            }
-        }
-        if (type_arg == TYPE_NUM) {
-            (*node)->value = atoi(str);
-            (*node)->type_value = TYPE_NUM;
-        }
-        if (type_arg == TYPE_VAR) {
 
-        }
+        err = write_arg(*node, vars, str, type_arg);
+        if (err) return err;
 
         (*childs)++;
         /////////////////////////////////////////////////////////
         *buf = skip_spaces(*buf);
         int right_childs = 0;
         int right_dep = 0;
-        err = tree_read(&(*node)->right, buf, &right_childs, &right_dep);
+        err = tree_read_(&(*node)->right, vars, buf, &right_childs, &right_dep);
         if (err) return err;
         *buf = skip_spaces(*buf);
         (*childs) += right_childs;
@@ -134,6 +135,31 @@ static ErrorCode check_type_arg(char* str, TypeData* type_arg)
     }
 
     (*type_arg) = TYPE_ERR;
+    return ERROR_INPUT_VARIABLE;
+}
+
+static ErrorCode write_arg(Node* node, Variables* vars, char* str, TypeData type_arg)
+{
+    node->type_value = type_arg;
+    if (type_arg == TYPE_OP) {
+        for (int i = 0; i < COUNT_OPs; i++) {
+            if (strcmp(OPs[i].name, str) == 0) {
+                node->value = OPs[i].type_op;
+                break;
+            }
+        }
+    }
+
+    if (type_arg == TYPE_NUM)
+        node->value = atoi(str);
+    
+    if (type_arg == TYPE_VAR) {
+        node->value = vars->count;
+        vars->names[vars->count] = strdup(str);
+        if (!vars->names[vars->count]) return ERROR_STRDUP;
+        vars->count++;
+    }
+
     return ERROR_NO;
 }
 
@@ -145,6 +171,7 @@ static ErrorCode is_operator(char* str, int* is_oper)
             break;
         }
     }
+    
     return ERROR_NO;
 }
 
@@ -159,21 +186,25 @@ static ErrorCode is_number(char* str, int* is_num)
         i++;
     }
     (*is_num) = 1;
+
+    return ERROR_NO;
 }
 
 static ErrorCode is_variable(char* str, int* is_var)
 {
     int i = 0;
     while (str[i] != '\0' && !isspace(str[i])) {
-        for (int j = 0; j < sizeof(banned_chars); j++) {
-            if (str[i] == banned_chars[j]) {
+        for (int j = 0; j < (int)sizeof(banned_symbols); j++) {
+            if (str[i] == banned_symbols[j]) {
                 (*is_var) = 0;
-                return ERROR_NO;
+                return ERROR_INPUT_VARIABLE;
             }
         }
         i++;
     }
     (*is_var) = 1;
+
+    return ERROR_NO;
 }
 
 static char* skip_spaces(char* s)
