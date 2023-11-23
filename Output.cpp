@@ -50,7 +50,7 @@ static ErrorCode tree_cmd_dump_(Node* node, Variables* vars, int dep)
                 printf(print_lyellow("%s\n"), OPs[i].name);
         }
     } else if (node->type_value == TYPE_VAR) {
-        printf(print_lgreen("%s\n"), vars->names[(int)node->value]);
+        printf(print_lgreen("%s = %.2lf\n"), vars->names[(int)node->value], vars->value[(int)node->value]);
     }
 
     if (node->right) tree_cmd_dump_(node->right, vars, dep + 1);
@@ -152,7 +152,7 @@ static ErrorCode tree_graph_dump_make_node(Node* node, Variables* vars, FILE* du
             }
         }
     } else if (node->type_value == TYPE_VAR) {
-        fprintf(dump_file, "%s", vars->names[(int)node->value]);
+        fprintf(dump_file, "%s = %.2lf", vars->names[(int)node->value], vars->value[(int)node->value]);
         fprintf(dump_file, " | { childs = %d | dep = %d } }\", fillcolor = \"#f79e19\"];\n",
                            node->size, node->dep);
     }

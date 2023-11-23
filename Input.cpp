@@ -154,10 +154,20 @@ static ErrorCode write_arg(Node* node, Variables* vars, char* str, TypeData type
         node->value = atoi(str);
     
     if (type_arg == TYPE_VAR) {
-        node->value = vars->count;
-        vars->names[vars->count] = strdup(str);
-        if (!vars->names[vars->count]) return ERROR_STRDUP;
-        vars->count++;
+        int was = 0;
+        for (int i = 0; i < vars->count; i++) {
+            if (strcmp(vars->names[i], str) == 0) {
+                node->value = i;
+                was = 1;
+                break;
+            }
+        }
+        if (!was) {
+            node->value = vars->count;
+            vars->names[vars->count] = strdup(str);
+            if (!vars->names[vars->count]) return ERROR_STRDUP;
+            vars->count++;
+        }
     }
 
     return ERROR_NO;
