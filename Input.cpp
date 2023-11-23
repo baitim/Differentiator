@@ -13,6 +13,7 @@ static const int MAX_SIZE_INPUT = 500;
 static const int POISON_VALUE = -0xbe;
 
 static ErrorCode tree_read_     (Node** node, Variables* vars, char** buf, int* childs, int *dep);
+static ErrorCode vars_read_     (Variables* vars, char** buf);
 static ErrorCode fsize          (const char* name_file, int* size_file);
 static ErrorCode get_arg        (char** buf, char* str);
 static ErrorCode check_type_arg (char* str, TypeData* type_arg);
@@ -31,6 +32,9 @@ ErrorCode tree_read(Tree* tree, char** buf)
     int childs = 0;
     int dep = 0;
     ErrorCode err = tree_read_(&tree->root, tree->variables, buf, &childs, &dep);
+    if (err) return err;
+
+    err = vars_read_(tree->variables, buf);
     if (err) return err;
 
     return ERROR_NO;
@@ -85,6 +89,44 @@ static ErrorCode tree_read_(Node** node, Variables* vars, char** buf, int* child
     } else {
         *buf = skip_word(*buf); 
         return ERROR_NO;
+    }
+
+    return ERROR_NO;
+}
+
+static ErrorCode vars_read_(Variables* vars, char** buf)
+{
+    if (!buf) return ERROR_INVALID_BUF;
+
+    ErrorCode err = ERROR_NO;
+
+    while (**buf != '\0') {
+        *buf = skip_spaces(*buf);
+
+        char str[MAX_SIZE_INPUT] = "";
+        err = get_arg(buf, str);
+        if (err) return err;
+
+        for (int i = 0; i < vars->count; i++) {
+            if (strcmp(vars->names[i], str) == 0) {
+                if (vars->valid[i]) return ERROR_DUPLICATE_VAR;
+
+                *buf = skip_spaces(*buf);
+                printf("buf = %s\n", *buf);
+                if (**buf != '=') return ERROR_INVALID_INPUT;
+                (*buf)++;
+                *buf = skip_spaces(*buf);
+                printf("buf = %s\n", *buf);
+
+                char value[MAX_SIZE_INPUT] = "";
+                err = get_arg(buf, value);
+                if (err) return err;
+                vars->value[i] = atof(value);
+                vars->valid[i] = 1;
+                printf("val = %lf\n", vars->value[i]);
+            }
+        }
+
     }
 
     return ERROR_NO;

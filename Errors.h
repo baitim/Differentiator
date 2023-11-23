@@ -25,6 +25,7 @@ enum ErrorCode {
     ERROR_STRDUP =          1 << 14,
     ERROR_INPUT_VARIABLE =  1 << 15,
     ERROR_DIVIDED_NULL =    1 << 16,
+    ERROR_DUPLICATE_VAR =   1 << 17,
 };
 
 const Error ERRORS[] = {
@@ -46,6 +47,7 @@ const Error ERRORS[] = {
     {ERROR_STRDUP,          "cannot strdup"},
     {ERROR_INPUT_VARIABLE,  "variable has banned symbol"},
     {ERROR_DIVIDED_NULL,    "division by zero is evalute"},
+    {ERROR_DUPLICATE_VAR,   "reinitialization variable in input file"},
 };
 const int COUNT_ERRORS = sizeof(ERRORS) / sizeof(Error);
 

@@ -9,7 +9,6 @@ struct Variable {
     int index;
 };
 
-static const int MAX_COUNT_VARS = 1000;
 static const int DEFAULT_COUNT_VARIABLES = 500;
 struct Variables {
     char** names;
