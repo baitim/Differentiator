@@ -14,6 +14,7 @@ int main()
     
     ErrorCode err = ERROR_NO;
     int number_graph_dump = 1;
+    int number_tex_dump = 1;
     Tree* tree = nullptr;
     err = tree_new(&tree);
     if (err) {
@@ -51,6 +52,12 @@ int main()
     }
 
     err = tree_graph_dump(tree, &number_graph_dump);
+    if (err) {
+        err_dump(err);
+        return err;
+    }
+
+    err = tree_tex_dump(tree, &number_tex_dump);
     if (err) {
         err_dump(err);
         return err;

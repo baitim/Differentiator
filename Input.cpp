@@ -7,7 +7,7 @@
 
 #include "Input.h"
 
-#define MAX(a, b) ((a) > (b)) ? (a) : (b)
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
 static const int MAX_SIZE_INPUT = 500;
 static const int POISON_VALUE = -0xbe;
