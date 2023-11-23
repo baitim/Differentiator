@@ -23,6 +23,7 @@ static ErrorCode is_number      (char* str, int* is_num);
 static ErrorCode is_variable    (char* str, int* is_var);
 static char* skip_spaces        (char* s);
 static char* skip_word          (char* s);
+static ErrorCode vars_increase_cap(Variables* vars);
 
 ErrorCode tree_read(Tree* tree, char** buf)
 {
@@ -96,10 +97,12 @@ static ErrorCode tree_read_(Node** node, Variables* vars, char** buf, int* child
 
 static ErrorCode vars_read_(Variables* vars, char** buf)
 {
-    if (!buf) return ERROR_INVALID_BUF;
+    assert(buf);
+    assert(*buf);
 
     ErrorCode err = ERROR_NO;
 
+    int count_vars = vars->count;
     while (**buf != '\0') {
         *buf = skip_spaces(*buf);
 
@@ -107,27 +110,43 @@ static ErrorCode vars_read_(Variables* vars, char** buf)
         err = get_arg(buf, str);
         if (err) return err;
 
-        for (int i = 0; i < vars->count; i++) {
+        int is_var = 0;
+        for (int i = 0; i < count_vars; i++) {
             if (strcmp(vars->names[i], str) == 0) {
-                if (vars->valid[i]) return ERROR_DUPLICATE_VAR;
+                if (vars->valid[i] == 1) return ERROR_DUPLICATE_VAR;
 
                 *buf = skip_spaces(*buf);
-                printf("buf = %s\n", *buf);
                 if (**buf != '=') return ERROR_INVALID_INPUT;
                 (*buf)++;
                 *buf = skip_spaces(*buf);
-                printf("buf = %s\n", *buf);
 
                 char value[MAX_SIZE_INPUT] = "";
                 err = get_arg(buf, value);
                 if (err) return err;
+
                 vars->value[i] = atof(value);
                 vars->valid[i] = 1;
-                printf("val = %lf\n", vars->value[i]);
+
+                is_var = 1;
+                break;
             }
         }
 
+        if (!is_var) {
+            *buf = skip_word(*buf);
+        }
     }
+
+    vars->capacity = count_vars;
+    
+    vars->names = (char**)realloc(vars->names, vars->capacity * sizeof(char*));
+    if (!vars->names) return ERROR_ALLOC_FAIL;
+
+    vars->valid = (int*)realloc(vars->valid, vars->capacity * sizeof(int));
+    if (!vars->valid) return ERROR_ALLOC_FAIL;
+
+    vars->value = (double*)realloc(vars->value, vars->capacity * sizeof(double));
+    if (!vars->value) return ERROR_ALLOC_FAIL;
 
     return ERROR_NO;
 }
@@ -143,10 +162,9 @@ static ErrorCode get_arg(char** buf, char* str)
         str[i] = (*buf)[i];
         i++;
     }
-    i++;
-    str[i] = '\0';
+    str[i + 1] = '\0';
 
-    (*buf) += i;
+    *buf = skip_word(*buf);
     return ERROR_NO;
 }
 
@@ -182,6 +200,8 @@ static ErrorCode check_type_arg(char* str, TypeData* type_arg)
 
 static ErrorCode write_arg(Node* node, Variables* vars, char* str, TypeData type_arg)
 {
+    ErrorCode err = ERROR_NO;
+
     node->type_value = type_arg;
     if (type_arg == TYPE_OP) {
         for (int i = 0; i < COUNT_OPs; i++) {
@@ -209,6 +229,10 @@ static ErrorCode write_arg(Node* node, Variables* vars, char* str, TypeData type
             vars->names[vars->count] = strdup(str);
             if (!vars->names[vars->count]) return ERROR_STRDUP;
             vars->count++;
+            if (vars->count >= vars->capacity - 1) {
+                err = vars_increase_cap(vars);
+                if (err) return err;
+            }
         }
     }
 
@@ -261,18 +285,16 @@ static ErrorCode is_variable(char* str, int* is_var)
 
 static char* skip_spaces(char* s)
 {
-    int i = 0;
-    while (isspace(s[i]))
-        i++;
-    return &s[i];
+    while (*s != '\0' && isspace(*s))
+        s++;
+    return s;
 }
 
 static char* skip_word(char* s)
 {
-    int i = 0;
-    while (s[i] != '\0' && !isspace(s[i]))
-        i++;
-    return &s[i];
+    while (*s != '\0' && !isspace(*s))
+        s++;
+    return s;
 }
 
 ErrorCode node_init(Node** node)
@@ -323,4 +345,21 @@ static ErrorCode fsize(const char* name_file, int* size_file)
     }
 
     return ERROR_READ_FILE;
+}
+
+static ErrorCode vars_increase_cap(Variables* vars)
+{
+    assert(vars);
+
+    vars->capacity = (int)(vars->capacity * MULTIPLIER_CAPACITY);
+    vars->names = (char**)realloc(vars->names, vars->capacity * sizeof(char*));
+    if (!vars->names) return ERROR_ALLOC_FAIL;
+
+    vars->valid = (int*)realloc(vars->valid, vars->capacity * sizeof(int));
+    if (!vars->valid) return ERROR_ALLOC_FAIL;
+
+    vars->value = (double*)realloc(vars->value, vars->capacity * sizeof(double));
+    if (!vars->value) return ERROR_ALLOC_FAIL;
+
+    return ERROR_NO;
 }

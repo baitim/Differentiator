@@ -26,16 +26,17 @@ ErrorCode tree_new(Tree** tree)
     (*tree)->variables = (Variables*)calloc(1, sizeof(Variables));
     if (!(*tree)->variables) return ERROR_ALLOC_FAIL;
 
-    (*tree)->variables->names = (char**)calloc(DEFAULT_COUNT_VARIABLES, sizeof(char*));
+    (*tree)->variables->names = (char**)calloc(DEFAULT_CAPACITY, sizeof(char*));
     if (!(*tree)->variables->names) return ERROR_ALLOC_FAIL;
 
-    (*tree)->variables->valid = (int*)calloc(DEFAULT_COUNT_VARIABLES, sizeof(int));
+    (*tree)->variables->valid = (int*)calloc(DEFAULT_CAPACITY, sizeof(int));
     if (!(*tree)->variables->valid) return ERROR_ALLOC_FAIL;
 
-    (*tree)->variables->value = (double*)calloc(DEFAULT_COUNT_VARIABLES, sizeof(double));
+    (*tree)->variables->value = (double*)calloc(DEFAULT_CAPACITY, sizeof(double));
     if (!(*tree)->variables->value) return ERROR_ALLOC_FAIL;
 
     (*tree)->variables->count = 0;
+    (*tree)->variables->capacity = DEFAULT_CAPACITY;
 
     return ERROR_NO;
 }

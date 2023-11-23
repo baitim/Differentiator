@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "Node.h"
+#include "Tree.h"
 #include "Errors.h"
 
 ErrorCode tree_read     (Tree* tree, char** buf);
