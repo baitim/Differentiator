@@ -26,6 +26,7 @@ static ErrorCode tree_graph_dump_make_edge  (Node* node, FILE* dump_file);
 static ErrorCode tree_tex_dump_             (Node* node, Variables* vars, FILE* dump_file);
 static ErrorCode tree_equation_dump         (Node* node, Variables* vars, FILE* dump_file,
                                              Branch branch, TypeData par_type, TypeOP par_op);
+static ErrorCode make_name_file             (char* buffer, const char *type, char** name_dump_file);
 static int is_double_equal                  (double x, double y);
 
 ErrorCode tree_cmd_dump(Tree* tree)
@@ -78,19 +79,17 @@ ErrorCode tree_graph_dump(Tree* tree, int* number_graph_dump)
     char buffer[MAX_SIZE_NAME_DUMP] = "";
     snprintf(buffer, MAX_SIZE_NAME_DUMP, "%s/dump%d", dump_dir, *number_graph_dump);
 
-    char* name_dot_file = strdup(buffer);
-    if (!name_dot_file) return ERROR_ALLOC_FAIL;
-    name_dot_file = strcat(name_dot_file, ".dot");
-    if (!name_dot_file) return ERROR_ALLOC_FAIL;
-
-    FILE* dump_file = fopen(name_dot_file, "w");
+    char *name_dump_file = nullptr;
+    ErrorCode err = make_name_file(buffer, ".dot", &name_dump_file);
+    if (err) return err;
+    FILE* dump_file = fopen(name_dump_file, "w");
     if (!dump_file) {
         printf("Error open file to dump\n");
         return ERROR_SYSTEM_COMMAND;
     }
-    free(name_dot_file);
+    free(name_dump_file);
 
-    ErrorCode err = tree_verify(tree->root);
+    err = tree_verify(tree->root);
     if (err) return err;
 
     fprintf(dump_file, "digraph {\n"
@@ -201,19 +200,18 @@ ErrorCode tree_tex_dump(Tree* tree, int* number_tex_dump)
     char buffer[MAX_SIZE_NAME_DUMP] = "";
     snprintf(buffer, MAX_SIZE_NAME_DUMP, "%s/dump%d", dump_dir, *number_tex_dump);
 
-    char* name_tex_file = strdup(buffer);
-    if (!name_tex_file) return ERROR_ALLOC_FAIL;
-    name_tex_file = strcat(name_tex_file, ".tex");
-    if (!name_tex_file) return ERROR_ALLOC_FAIL;
+    char *name_dump_file = nullptr;
+    ErrorCode err = make_name_file(buffer, ".tex", &name_dump_file);
+    if (err) return err;
 
-    FILE* dump_file = fopen(name_tex_file, "w");
+    FILE* dump_file = fopen(name_dump_file, "w");
     if (!dump_file) {
         printf("Error open file to dump\n");
         return ERROR_SYSTEM_COMMAND;
     }
-    free(name_tex_file);
+    free(name_dump_file);
 
-    ErrorCode err = tree_verify(tree->root);
+    err = tree_verify(tree->root);
     if (err) return err;
 
     time_t mytime = time(NULL);
@@ -317,6 +315,20 @@ static ErrorCode tree_equation_dump(Node* node, Variables* vars, FILE* dump_file
         fprintf(dump_file, "}");
 
     return tree_verify(node);
+}
+
+static ErrorCode make_name_file(char* buffer, const char *type, char** name_dump_file)
+{
+    int len_buf = (int)strlen(buffer);
+    int len_type = (int)strlen(type);
+    int size_dump_file = len_buf + len_type + 1;
+    *name_dump_file = (char*)calloc(size_dump_file, sizeof(char));
+    (*name_dump_file) = (char*)memcpy((*name_dump_file), buffer, len_buf * sizeof(char) + 1);
+    if (!(*name_dump_file)) return ERROR_ALLOC_FAIL;
+    (*name_dump_file) = strcat((*name_dump_file), type);
+    if (!(*name_dump_file)) return ERROR_ALLOC_FAIL;
+
+    return ERROR_NO;
 }
 
 static int is_double_equal(double x, double y)

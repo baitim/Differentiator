@@ -358,6 +358,10 @@ static ErrorCode vars_increase_cap(Variables* vars)
     vars->valid = (int*)realloc(vars->valid, vars->capacity * sizeof(int));
     if (!vars->valid) return ERROR_ALLOC_FAIL;
 
+    for (int i = vars->count; i < vars->capacity; i++) {
+        vars->valid[i] = 0;
+    }
+
     vars->value = (double*)realloc(vars->value, vars->capacity * sizeof(double));
     if (!vars->value) return ERROR_ALLOC_FAIL;
 

@@ -9,7 +9,7 @@ struct Variable {
     int index;
 };
 
-static const int DEFAULT_CAPACITY =     100;
+static const int DEFAULT_CAPACITY =     1;
 static const int MULTIPLIER_CAPACITY =  2;
 struct Variables {
     char** names;
