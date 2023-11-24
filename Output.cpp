@@ -27,10 +27,10 @@ static ErrorCode tree_graph_dump_make_edge  (Node* node, FILE* dump_file);
 static ErrorCode tree_tex_dump_             (Node* node, Variables* vars, FILE* dump_file);
 static ErrorCode tree_equation_dump         (Node* node, Variables* vars, FILE* dump_file,
                                              Branch branch, TypeData par_type, TypeOP par_op);
-static ErrorCode write_left_parenthesis(Node* node, FILE* dump_file, Branch branch,
-                                        TypeData par_type, TypeOP par_op);
-static ErrorCode write_right_parenthesis(Node* node, FILE* dump_file,
-                                         TypeData par_type, TypeOP par_op);
+static ErrorCode write_left_parenthesis     (Node* node, FILE* dump_file, Branch branch,
+                                             TypeData par_type, TypeOP par_op);
+static ErrorCode write_right_parenthesis    (Node* node, FILE* dump_file,
+                                             TypeData par_type, TypeOP par_op);
 static ErrorCode make_name_file             (char* buffer, const char *type, char** name_dump_file);
 static int is_double_equal                  (double x, double y);
 

@@ -270,8 +270,8 @@ static ErrorCode is_variable(char* str, int* is_var)
 {
     int i = 0;
     while (str[i] != '\0' && !isspace(str[i])) {
-        for (int j = 0; j < (int)sizeof(banned_symbols); j++) {
-            if (str[i] == banned_symbols[j]) {
+        for (int j = 0; j < (int)sizeof(BANNED_SYMBOLS); j++) {
+            if (str[i] == BANNED_SYMBOLS[j]) {
                 (*is_var) = 0;
                 return ERROR_INPUT_VARIABLE;
             }
