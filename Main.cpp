@@ -5,6 +5,7 @@
 #include "Tree.h"
 #include "Output.h"
 #include "Input.h"
+#include "Eval.h"
 #include "Diff.h"
 
 int main()
@@ -44,6 +45,12 @@ int main()
         return err;
     }
     printf(print_lcyan("ans_eval = %lf\n"), ans_eval);
+
+    err = tree_diff(tree);
+    if (err) {
+        err_dump(err);
+        return err;
+    }
 
     err = tree_cmd_dump(tree);
     if (err) {

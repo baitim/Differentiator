@@ -15,7 +15,8 @@ enum Branch {
     BRANCH_RIGHT = 1,
 };
 
-const char dump_dir[] = "dumps";
+const char dump_dir[] =  "dumps";
+const char dump_name[] = "dump";
 const int MAX_SIZE_NAME_DUMP = 50;
 const int MAX_SIZE_COMMAND = 100;
 const double EPSILON = 1e-9;
@@ -26,6 +27,10 @@ static ErrorCode tree_graph_dump_make_edge  (Node* node, FILE* dump_file);
 static ErrorCode tree_tex_dump_             (Node* node, Variables* vars, FILE* dump_file);
 static ErrorCode tree_equation_dump         (Node* node, Variables* vars, FILE* dump_file,
                                              Branch branch, TypeData par_type, TypeOP par_op);
+static ErrorCode write_left_parenthesis(Node* node, FILE* dump_file, Branch branch,
+                                        TypeData par_type, TypeOP par_op);
+static ErrorCode write_right_parenthesis(Node* node, FILE* dump_file,
+                                         TypeData par_type, TypeOP par_op);
 static ErrorCode make_name_file             (char* buffer, const char *type, char** name_dump_file);
 static int is_double_equal                  (double x, double y);
 
@@ -77,7 +82,7 @@ ErrorCode tree_graph_dump(Tree* tree, int* number_graph_dump)
     if (!tree) return ERROR_INVALID_TREE;
 
     char buffer[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(buffer, MAX_SIZE_NAME_DUMP, "%s/dump%d", dump_dir, *number_graph_dump);
+    snprintf(buffer, MAX_SIZE_NAME_DUMP, "%s/%s%d", dump_dir, dump_name, *number_graph_dump);
 
     char *name_dump_file = nullptr;
     ErrorCode err = make_name_file(buffer, ".dot", &name_dump_file);
@@ -198,7 +203,7 @@ ErrorCode tree_tex_dump(Tree* tree, int* number_tex_dump)
     if (!tree) return ERROR_INVALID_TREE;
 
     char buffer[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(buffer, MAX_SIZE_NAME_DUMP, "%s/dump%d", dump_dir, *number_tex_dump);
+    snprintf(buffer, MAX_SIZE_NAME_DUMP, "%s/%s%d", dump_dir, dump_name, *number_tex_dump);
 
     char *name_dump_file = nullptr;
     ErrorCode err = make_name_file(buffer, ".tex", &name_dump_file);
@@ -276,12 +281,9 @@ static ErrorCode tree_equation_dump(Node* node, Variables* vars, FILE* dump_file
     if (node->type_value == TYPE_OP)
         node_op = (TypeOP)(int)node->value;
 
-    if (par_type == TYPE_OP && par_op == OP_DIV) {
-        if (branch == BRANCH_RIGHT)
-            fprintf(dump_file, "{");
-        if (branch == BRANCH_LEFT)
-            fprintf(dump_file, "\\frac{");
-    }
+    err = write_left_parenthesis(node, dump_file, branch, 
+                                 par_type, par_op);
+    if (err) return err;
 
     if (node->left) tree_equation_dump(node->left, vars, dump_file, BRANCH_LEFT, 
                                        node->type_value, node_op);
@@ -311,10 +313,48 @@ static ErrorCode tree_equation_dump(Node* node, Variables* vars, FILE* dump_file
     if (node->right) tree_equation_dump(node->right, vars, dump_file, BRANCH_RIGHT, 
                                         node->type_value, node_op);
 
-    if (par_type == TYPE_OP && par_op == OP_DIV)
-        fprintf(dump_file, "}");
+    err = write_right_parenthesis(node, dump_file, 
+                                  par_type, par_op);
+    if (err) return err;
 
     return tree_verify(node);
+}
+
+static ErrorCode write_left_parenthesis(Node* node, FILE* dump_file, Branch branch,
+                                        TypeData par_type, TypeOP par_op)
+{
+    assert(node);
+    assert(dump_file);
+
+    if (par_type == TYPE_OP) {
+        if (par_op == OP_DIV) {
+            if (branch == BRANCH_RIGHT)
+                fprintf(dump_file, "{");
+            if (branch == BRANCH_LEFT)
+                fprintf(dump_file, "\\frac{");
+        }
+        if (par_op == OP_MUL && node->dep > 1)
+            fprintf(dump_file, "(");
+    }
+
+    return ERROR_NO;
+}
+
+static ErrorCode write_right_parenthesis(Node* node, FILE* dump_file,
+                                         TypeData par_type, TypeOP par_op)
+{
+    assert(node);
+    assert(dump_file);
+    
+    if (par_type == TYPE_OP) {
+        if (par_op == OP_DIV)
+            fprintf(dump_file, "}");
+
+        if (par_op == OP_MUL && node->dep > 1)
+            fprintf(dump_file, ")");
+    }
+
+    return ERROR_NO;
 }
 
 static ErrorCode make_name_file(char* buffer, const char *type, char** name_dump_file)
