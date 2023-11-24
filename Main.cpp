@@ -12,10 +12,17 @@ int main()
 {
     printf(print_lblue("# Implementation of Differentiator.\n"
                        "# (c) BAIDUSENOV TIMUR, 2023\n\n"));
-    
+
     ErrorCode err = ERROR_NO;
     int number_graph_dump = 1;
-    int number_tex_dump = 1;
+    int number_tex_dump =   1;
+    int number_html_dump =  1;
+    err = prepare_dump_dir();
+    if (err) {
+        err_dump(err);
+        return err;
+    }
+
     Tree* tree = nullptr;
     err = tree_new(&tree);
     if (err) {
@@ -76,7 +83,7 @@ int main()
         return err;
     }
 
-    err = tree_html_dump(number_graph_dump);
+    err = tree_html_dump(number_graph_dump, &number_html_dump);
     if (err) {
         err_dump(err);
         return err;

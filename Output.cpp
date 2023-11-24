@@ -17,8 +17,8 @@ enum Branch {
 
 const char dump_dir[] =  "dumps";
 const char dump_name[] = "dump";
-const int MAX_SIZE_NAME_DUMP = 50;
-const int MAX_SIZE_COMMAND = 100;
+const int MAX_SIZE_NAME_DUMP = 100;
+const int MAX_SIZE_COMMAND = 500;
 const double EPSILON = 1e-9;
 
 static ErrorCode tree_cmd_dump_             (Node* node, Variables* vars, int dep);
@@ -33,6 +33,25 @@ static ErrorCode write_right_parenthesis(Node* node, FILE* dump_file,
                                          TypeData par_type, TypeOP par_op);
 static ErrorCode make_name_file             (char* buffer, const char *type, char** name_dump_file);
 static int is_double_equal                  (double x, double y);
+
+ErrorCode prepare_dump_dir()
+{
+    char command[MAX_SIZE_COMMAND] = "";
+    snprintf(command, MAX_SIZE_COMMAND, "rm -r %s/*", dump_dir);
+    int sys = system(command);
+    if (sys) return ERROR_SYSTEM_COMMAND;
+
+    snprintf(command, MAX_SIZE_COMMAND, "mkdir %s/dot ; "
+                                        "mkdir %s/png ; "
+                                        "mkdir %s/html ;"
+                                        "mkdir %s/tex ;"
+                                        "mkdir %s/pdf ;",
+                                        dump_dir, dump_dir, dump_dir, dump_dir, dump_dir);
+    sys = system(command);
+    if (sys) return ERROR_SYSTEM_COMMAND;
+
+    return ERROR_NO;
+}
 
 ErrorCode tree_cmd_dump(Tree* tree)
 {
@@ -81,18 +100,17 @@ ErrorCode tree_graph_dump(Tree* tree, int* number_graph_dump)
 {
     if (!tree) return ERROR_INVALID_TREE;
 
-    char buffer[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(buffer, MAX_SIZE_NAME_DUMP, "%s/%s%d", dump_dir, dump_name, *number_graph_dump);
+    char dot_path[MAX_SIZE_NAME_DUMP] = "";
+    snprintf(dot_path, MAX_SIZE_NAME_DUMP, "%s/dot/%s%d", dump_dir, dump_name, *number_graph_dump);
 
-    char *name_dump_file = nullptr;
-    ErrorCode err = make_name_file(buffer, ".dot", &name_dump_file);
+    char *name_dot_file = nullptr;
+    ErrorCode err = make_name_file(dot_path, ".dot", &name_dot_file);
     if (err) return err;
-    FILE* dump_file = fopen(name_dump_file, "w");
+    FILE* dump_file = fopen(name_dot_file, "w");
     if (!dump_file) {
         printf("Error open file to dump\n");
         return ERROR_SYSTEM_COMMAND;
     }
-    free(name_dump_file);
 
     err = tree_verify(tree->root);
     if (err) return err;
@@ -115,12 +133,21 @@ ErrorCode tree_graph_dump(Tree* tree, int* number_graph_dump)
     fprintf(dump_file, "}\n");
     fclose(dump_file);
 
+    char png_path[MAX_SIZE_NAME_DUMP] = "";
+    snprintf(png_path, MAX_SIZE_NAME_DUMP, "%s/png/%s%d", dump_dir, dump_name, *number_graph_dump);
+
+    char *name_png_file = nullptr;
+    err = make_name_file(png_path, ".png", &name_png_file);
+    if (err) return err;
     char command[MAX_SIZE_COMMAND] = "";
-    snprintf(command, MAX_SIZE_COMMAND, "gvpack -u %s.dot | dot -Tpng -o %s.png", buffer, buffer);
+    snprintf(command, MAX_SIZE_COMMAND, "gvpack -u %s | dot -Tpng -o %s", 
+                                        name_dot_file, name_png_file);
     int sys = system(command);
     if (sys) return ERROR_SYSTEM_COMMAND;
 
     (*number_graph_dump)++;
+    free(name_dot_file);
+    free(name_png_file);
     return tree_verify(tree->root);
 }
 
@@ -175,10 +202,10 @@ static ErrorCode tree_graph_dump_make_edge(Node* node, FILE* dump_file)
     return tree_verify(node);
 }
 
-ErrorCode tree_html_dump(int number_graph_dump)
+ErrorCode tree_html_dump(int number_graph_dump, int* number_html_dump)
 {
     char buffer[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(buffer, MAX_SIZE_NAME_DUMP, "%s/dump.html", dump_dir);
+    snprintf(buffer, MAX_SIZE_NAME_DUMP, "%s/html/%s%d.html", dump_dir, dump_name, *number_html_dump);
 
     FILE* html_file = fopen(buffer, "w");
     if (!html_file) {
@@ -189,10 +216,12 @@ ErrorCode tree_html_dump(int number_graph_dump)
     fprintf(html_file, "<pre>\n");
 
     for (int i = 1; i < number_graph_dump; i++) {
-        fprintf(html_file, "<img src = \"dump%d.png\">\n", i);
+        fprintf(html_file, "<img src = \"../png/%s%d.png\">\n", dump_name, i);
     }
 
     fprintf(html_file, "</pre>\n");
+
+    (*number_html_dump)++;
 
     fclose(html_file);
     return ERROR_NO;
@@ -202,19 +231,18 @@ ErrorCode tree_tex_dump(Tree* tree, int* number_tex_dump)
 {
     if (!tree) return ERROR_INVALID_TREE;
 
-    char buffer[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(buffer, MAX_SIZE_NAME_DUMP, "%s/%s%d", dump_dir, dump_name, *number_tex_dump);
+    char tex_path[MAX_SIZE_NAME_DUMP] = "";
+    snprintf(tex_path, MAX_SIZE_NAME_DUMP, "%s/tex/%s%d", dump_dir, dump_name, *number_tex_dump);
 
-    char *name_dump_file = nullptr;
-    ErrorCode err = make_name_file(buffer, ".tex", &name_dump_file);
+    char *name_tex_file = nullptr;
+    ErrorCode err = make_name_file(tex_path, ".tex", &name_tex_file);
     if (err) return err;
 
-    FILE* dump_file = fopen(name_dump_file, "w");
+    FILE* dump_file = fopen(name_tex_file, "w");
     if (!dump_file) {
         printf("Error open file to dump\n");
         return ERROR_SYSTEM_COMMAND;
     }
-    free(name_dump_file);
 
     err = tree_verify(tree->root);
     if (err) return err;
@@ -237,14 +265,28 @@ ErrorCode tree_tex_dump(Tree* tree, int* number_tex_dump)
     fprintf(dump_file, "\\end{document}\n");
     fclose(dump_file);
 
+    char pdf_path[MAX_SIZE_NAME_DUMP] = "";
+    snprintf(pdf_path, MAX_SIZE_NAME_DUMP, "%s/pdf/%s%d", dump_dir, dump_name, *number_tex_dump);
+
+    char *name_aux_file = nullptr;
+    err = make_name_file(pdf_path, ".aux", &name_aux_file);
+    if (err) return err;
+    char *name_tex_log_file = nullptr;
+    err = make_name_file(pdf_path, ".log", &name_tex_log_file);
+    if (err) return err;
+
     char command[MAX_SIZE_COMMAND] = "";
-    snprintf(command, MAX_SIZE_COMMAND, "pdflatex -output-directory=%s %s.tex ; "
-                                        "rm %s.aux ; rm %s.log", 
-                                        dump_dir, buffer, buffer, buffer);
+    snprintf(command, MAX_SIZE_COMMAND, "pdflatex -output-directory=%s/pdf %s ; "
+                                        "rm %s ; rm %s", 
+                                        dump_dir, name_tex_file, 
+                                        name_aux_file, name_tex_log_file);
     int sys = system(command);
     if (sys) return ERROR_SYSTEM_COMMAND;
 
     (*number_tex_dump)++;
+    free(name_tex_file);
+    free(name_aux_file);
+    free(name_tex_log_file);
     return tree_verify(tree->root);
 }
 
@@ -261,7 +303,7 @@ static ErrorCode tree_tex_dump_(Node* node, Variables* vars, FILE* dump_file)
     if (node->right) err = tree_tex_dump_(node->right, vars, dump_file);
     if (err) return err;
 
-    fprintf(dump_file, "\\begin{equation}\n");
+    fprintf(dump_file, "\\begin{equation}\n\t");
     err = tree_equation_dump(node, vars, dump_file, BRANCH_ERR, TYPE_ERR, OP_ERR);
     if (err) return err;
     fprintf(dump_file, "\n\\end{equation}\n");
