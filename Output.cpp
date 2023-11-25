@@ -8,6 +8,7 @@
 #include "ANSI_colors.h"
 #include "Output.h"
 #include "Node.h"
+#include "Eval.h"
 
 enum Branch {
     BRANCH_ERR =   0,
@@ -19,9 +20,10 @@ const int MAX_SIZE_NAME_DUMP = 100;
 const int MAX_SIZE_COMMAND = 500;
 const double EPSILON = 1e-9;
 
+static ErrorCode tree_write_points          (Tree* tree, EvalPoints* graph, FILE* dump_file);
 static ErrorCode tree_cmd_dump_             (Node* node, Variables* vars, int dep);
-static ErrorCode tree_graph_dump_make_node  (Node* node, Variables* vars, FILE* dump_file);
-static ErrorCode tree_graph_dump_make_edge  (Node* node, FILE* dump_file);
+static ErrorCode tree_png_dump_make_node    (Node* node, Variables* vars, FILE* dump_file);
+static ErrorCode tree_png_dump_make_edge    (Node* node, FILE* dump_file);
 static ErrorCode tree_tex_dump_             (Node* node, Variables* vars, FILE* dump_file);
 static ErrorCode tree_equation_dump         (Node* node, Variables* vars, FILE* dump_file,
                                              Branch branch, TypeData par_type, TypeOP par_op);
@@ -41,12 +43,16 @@ ErrorCode prepare_dump_dir(Tree* tree)
     snprintf(command, MAX_SIZE_COMMAND, "rm -r %s/*", tree->name);
     sys = system(command);
 
-    snprintf(command, MAX_SIZE_COMMAND, "mkdir %s/dot ; "
+    snprintf(command, MAX_SIZE_COMMAND, "mkdir %s/py ; "
+                                        "mkdir %s/graph ; "
+                                        "mkdir %s/dot ; "
                                         "mkdir %s/png ; "
                                         "mkdir %s/html ;"
                                         "mkdir %s/tex ;"
                                         "mkdir %s/pdf ;",
-                                        tree->name, tree->name, tree->name, tree->name, tree->name);
+                                        tree->name, tree->name, tree->name, 
+                                        tree->name, tree->name, tree->name,
+                                        tree->name);
     sys = system(command);
     if (sys) return ERROR_SYSTEM_COMMAND;
 
@@ -62,16 +68,109 @@ ErrorCode tree_big_dump(Tree* tree)
     err = tree_cmd_dump(tree);
     if (err) return err;
 
-    err = tree_graph_dump(tree);
+    err = tree_png_dump(tree);
     if (err) return err;
 
     err = tree_tex_dump(tree);
+    if (err) return err;
+
+    err = tree_graph_dump(tree);
     if (err) return err;
 
     err = tree_html_dump(tree);
     if (err) return err;
 
     return ERROR_NO;
+}
+
+ErrorCode tree_graph_dump(Tree* tree)
+{
+    if (!tree) return ERROR_INVALID_TREE;
+
+    ErrorCode err = tree_verify(tree->root);
+    if (err) return err;;
+
+    char py_path[MAX_SIZE_NAME_DUMP] = "";
+    snprintf(py_path, MAX_SIZE_NAME_DUMP, "%s/py/%s%d", tree->name, tree->name, 
+                                           tree->output_info->number_graph_dump);
+
+    char *name_py_file = nullptr;
+    err = make_name_file(py_path, ".py", &name_py_file);
+    if (err) return err;
+    FILE* dump_file = fopen(name_py_file, "w");
+    if (!dump_file) {
+        fprintf(stderr, "Error open file to dump\n");
+        return ERROR_SYSTEM_COMMAND;
+    }
+
+    char graph_path[MAX_SIZE_NAME_DUMP] = "";
+    snprintf(graph_path, MAX_SIZE_NAME_DUMP, "%s/graph/%s%d", tree->name, tree->name, 
+                                              tree->output_info->number_graph_dump);
+
+    EvalPoints graph = {-100, 100, 50, -50, 0.1f};
+
+    fprintf(dump_file,  "import matplotlib.pyplot as plt\n");
+
+    err = tree_write_points(tree, &graph, dump_file);
+    if (err) return err;
+
+    fprintf(dump_file, "plt.scatter(x, y)\n"
+                       "plt.plot(x, y)\n");
+    fprintf(dump_file, "plt.xlim(%d, %d)\n"
+                       "plt.ylim(%d, %d)\n",
+                        graph.left_board - 1, graph.right_board + 1,
+                        graph.min_value - 1, graph.max_value + 1);
+
+    char *name_graph_file = nullptr;
+    err = make_name_file(graph_path, ".png", &name_graph_file);
+    if (err) return err;
+    fprintf(dump_file, "plt.savefig('%s', dpi=300)\n", name_graph_file);
+    fclose(dump_file);
+
+    char command[MAX_SIZE_COMMAND] = "";
+    snprintf(command, MAX_SIZE_COMMAND, "python3 %s", name_py_file);
+    int sys = system(command);
+    if (sys) return ERROR_SYSTEM_COMMAND;
+
+    free(name_py_file);
+    free(name_graph_file);
+    tree->output_info->number_graph_dump++;
+    return tree_verify(tree->root);
+}
+
+static ErrorCode tree_write_points(Tree* tree, EvalPoints* graph, FILE* dump_file)
+{
+    if (!tree) return ERROR_INVALID_TREE;
+
+    ErrorCode err = tree_verify(tree->root);
+    if (err) return err;
+
+    if (graph->right_board < graph->left_board) return tree_verify(tree->root);
+
+    int size = (int)((double)(graph->right_board - graph->left_board) / graph->step_values) + 1;
+
+    double* x = (double*)calloc(size, sizeof(double));
+    if (!x) return ERROR_ALLOC_FAIL;
+
+    double* y = (double*)calloc(size, sizeof(double));
+    if (!y) return ERROR_ALLOC_FAIL;
+
+    err = tree_get_points(tree, graph, x, y);
+    if (err) return err;
+
+    fprintf(dump_file, "x = [");
+    for (int i = 0; i < size - 1; i++)
+        fprintf(dump_file, "%lf, ", x[i]);
+    fprintf(dump_file, "%lf]\n", x[size - 1]);
+
+    fprintf(dump_file, "y = [");
+    for (int i = 0; i < size - 1; i++)
+        fprintf(dump_file, "%lf, ", y[i]);
+    fprintf(dump_file, "%lf]\n", y[size - 1]);
+
+    free(x);
+    free(y);
+    return tree_verify(tree->root);
 }
 
 ErrorCode tree_cmd_dump(Tree* tree)
@@ -118,25 +217,25 @@ static ErrorCode tree_cmd_dump_(Node* node, Variables* vars, int dep)
     return tree_verify(node);
 }
 
-ErrorCode tree_graph_dump(Tree* tree)
+ErrorCode tree_png_dump(Tree* tree)
 {
     if (!tree) return ERROR_INVALID_TREE;
 
+    ErrorCode err = tree_verify(tree->root);
+    if (err) return err;
+
     char dot_path[MAX_SIZE_NAME_DUMP] = "";
     snprintf(dot_path, MAX_SIZE_NAME_DUMP, "%s/dot/%s%d", tree->name, tree->name, 
-                                            tree->output_info->number_graph_dump);
+                                            tree->output_info->number_png_dump);
 
     char *name_dot_file = nullptr;
-    ErrorCode err = make_name_file(dot_path, ".dot", &name_dot_file);
+    err = make_name_file(dot_path, ".dot", &name_dot_file);
     if (err) return err;
     FILE* dump_file = fopen(name_dot_file, "w");
     if (!dump_file) {
         fprintf(stderr, "Error open file to dump\n");
         return ERROR_SYSTEM_COMMAND;
     }
-
-    err = tree_verify(tree->root);
-    if (err) return err;
 
     fprintf(dump_file, "digraph {\n"
                        "\tgraph[label = \"%s\", labelloc = top, "
@@ -146,12 +245,12 @@ ErrorCode tree_graph_dump(Tree* tree)
                        "\tedge[minlen = 3, arrowsize = 1.5, penwidth = 3];\n"
                        "\tnode[shape = \"rectangle\", style = \"rounded, filled\", height = 3, width = 2, "
                        "fillcolor = \"#ab5b0f\", fontsize = 30, penwidth = 3.5, color = \"#941b1b\"]\n",
-                       tree->name);
+                        tree->name);
 
-    err = tree_graph_dump_make_node(tree->root, tree->variables, dump_file);
+    err = tree_png_dump_make_node(tree->root, tree->variables, dump_file);
     if (err) return err;
 
-    err = tree_graph_dump_make_edge(tree->root, dump_file);
+    err = tree_png_dump_make_edge(tree->root, dump_file);
     if (err) return err;
 
     fprintf(dump_file, "}\n");
@@ -159,31 +258,31 @@ ErrorCode tree_graph_dump(Tree* tree)
 
     char png_path[MAX_SIZE_NAME_DUMP] = "";
     snprintf(png_path, MAX_SIZE_NAME_DUMP, "%s/png/%s%d", tree->name, tree->name, 
-                                            tree->output_info->number_graph_dump);
+                                            tree->output_info->number_png_dump);
 
     char *name_png_file = nullptr;
     err = make_name_file(png_path, ".png", &name_png_file);
     if (err) return err;
     char command[MAX_SIZE_COMMAND] = "";
     snprintf(command, MAX_SIZE_COMMAND, "gvpack -u %s | dot -Tpng -o %s", 
-                                        name_dot_file, name_png_file);
+                                         name_dot_file, name_png_file);
     int sys = system(command);
     if (sys) return ERROR_SYSTEM_COMMAND;
 
-    tree->output_info->number_graph_dump++;
+    tree->output_info->number_png_dump++;
     free(name_dot_file);
     free(name_png_file);
     return tree_verify(tree->root);
 }
 
-static ErrorCode tree_graph_dump_make_node(Node* node, Variables* vars, FILE* dump_file)
+static ErrorCode tree_png_dump_make_node(Node* node, Variables* vars, FILE* dump_file)
 {
     if (!node) return ERROR_INVALID_TREE;
 
     ErrorCode err = tree_verify(node);
     if (err) return err;
 
-    if (node->left) tree_graph_dump_make_node(node->left, vars, dump_file);
+    if (node->left) tree_png_dump_make_node(node->left, vars, dump_file);
 
     fprintf(dump_file, "\t{ \n"
                        "\t\tnode[shape = \"Mrecord\"];\n"
@@ -191,44 +290,49 @@ static ErrorCode tree_graph_dump_make_node(Node* node, Variables* vars, FILE* du
     if (node->type_value == TYPE_NUM) {
         fprintf(dump_file, "%.2lf", node->value);
         fprintf(dump_file, " | { childs = %d | dep = %d } }\", fillcolor = \"#ab5b0f\"];\n",
-                           node->size, node->dep);
+                            node->size, node->dep);
     } else if (node->type_value == TYPE_OP) {
         for (int i = 0; i < COUNT_OPs; i++) {
             if (is_double_equal(OPs[i].type_op, node->value)) {
                 fprintf(dump_file, "%s", OPs[i].name);
                 fprintf(dump_file, " | { childs = %d | dep = %d }}\", fillcolor = \"#e3964d\"];\n",
-                                   node->size, node->dep);
+                                    node->size, node->dep);
             }
         }
     } else if (node->type_value == TYPE_VAR) {
         fprintf(dump_file, "%s = %.2lf", vars->var[(int)node->value].name, vars->var[(int)node->value].value);
         fprintf(dump_file, " | { childs = %d | dep = %d } }\", fillcolor = \"#f79e19\"];\n",
-                           node->size, node->dep);
+                            node->size, node->dep);
     }
     fprintf(dump_file, "\t}\n");
 
-    if (node->right) tree_graph_dump_make_node(node->right, vars, dump_file);
+    if (node->right) tree_png_dump_make_node(node->right, vars, dump_file);
 
     return tree_verify(node);
 }
 
-static ErrorCode tree_graph_dump_make_edge(Node* node, FILE* dump_file)
+static ErrorCode tree_png_dump_make_edge(Node* node, FILE* dump_file)
 {
     if (!node) return ERROR_INVALID_TREE;
 
     ErrorCode err = tree_verify(node);
     if (err) return err;
 
-    if (node->left)  tree_graph_dump_make_edge(node->left, dump_file);
+    if (node->left)  tree_png_dump_make_edge(node->left, dump_file);
     if (node->left)  fprintf(dump_file, "\tnode%p->node%p[color = yellow, labelangle = 45];\n", node, node->left);
     if (node->right) fprintf(dump_file, "\tnode%p->node%p[color = yellow, labelangle = 45];\n", node, node->right);
-    if (node->right) tree_graph_dump_make_edge(node->right, dump_file);
+    if (node->right) tree_png_dump_make_edge(node->right, dump_file);
 
     return tree_verify(node);
 }
 
 ErrorCode tree_html_dump(Tree* tree)
 {
+    if (!tree) return ERROR_INVALID_TREE;
+
+    ErrorCode err = tree_verify(tree->root);
+    if (err) return err;
+
     char buffer[MAX_SIZE_NAME_DUMP] = "";
     snprintf(buffer, MAX_SIZE_NAME_DUMP, "%s/html/%s%d.html", tree->name, tree->name, 
                                           tree->output_info->number_html_dump);
@@ -241,7 +345,7 @@ ErrorCode tree_html_dump(Tree* tree)
 
     fprintf(html_file, "<pre>\n");
 
-    for (int i = 1; i < tree->output_info->number_graph_dump; i++) {
+    for (int i = 1; i < tree->output_info->number_png_dump; i++) {
         fprintf(html_file, "<img src = \"../png/%s%d.png\">\n", tree->name, i);
     }
 
@@ -250,19 +354,22 @@ ErrorCode tree_html_dump(Tree* tree)
     tree->output_info->number_html_dump++;
 
     fclose(html_file);
-    return ERROR_NO;
+    return tree_verify(tree->root);
 }
 
 ErrorCode tree_tex_dump(Tree* tree)
 {
     if (!tree) return ERROR_INVALID_TREE;
 
+    ErrorCode err = tree_verify(tree->root);
+    if (err) return err;
+
     char tex_path[MAX_SIZE_NAME_DUMP] = "";
     snprintf(tex_path, MAX_SIZE_NAME_DUMP, "%s/tex/%s%d", tree->name, tree->name, 
                                             tree->output_info->number_tex_dump);
 
     char *name_tex_file = nullptr;
-    ErrorCode err = make_name_file(tex_path, ".tex", &name_tex_file);
+    err = make_name_file(tex_path, ".tex", &name_tex_file);
     if (err) return err;
 
     FILE* dump_file = fopen(name_tex_file, "w");

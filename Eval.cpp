@@ -4,6 +4,9 @@
 #include "ANSI_colors.h"
 #include "Eval.h"
 
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+
 const double EPSILON = 1e-9;
 
 static ErrorCode tree_eval_ (Node* node, Variables* vars, double* ans_eval);
@@ -12,6 +15,7 @@ static ErrorCode node_eval_ (Node* node, Variables* vars, double* ans_eval,
 static ErrorCode var_eval   (Node* node, Variables* vars, double* ans_eval);
 static ErrorCode op_eval    (Node* node, double* ans_eval, double left_eval, double right_eval);
 static ErrorCode clean_stdin();
+static double norm_double   (double x, double min, double max);
 static int is_double_equal  (double x, double y);
 
 ErrorCode tree_eval(Tree* tree, double* ans_eval)
@@ -105,11 +109,34 @@ static ErrorCode op_eval(Node* node, double* ans_eval, double left_eval, double 
     return ERROR_NO;
 }
 
+ErrorCode tree_get_points(Tree* tree, EvalPoints* graph, double* x, double* y)
+{
+    if (!tree) return ERROR_INVALID_TREE;
+
+    ErrorCode err = tree_verify(tree->root);
+    if (err) return err;
+
+    int max_ind = (int)((graph->right_board - graph->left_board) / graph->step_values) + 1;
+
+    for (int i = 0; i < max_ind; i++) {
+        double x_value = i * graph->step_values + graph->left_board;
+        x[i] = x_value;
+        y[i] = norm_double(30 * cos(double(x_value / 3)), graph->min_value, graph->max_value);
+    }
+
+    return tree_verify(tree->root);
+}
+
 static ErrorCode clean_stdin()
 {
     while (getchar() != '\n')
         ;
     return ERROR_NO;
+}
+
+static double norm_double(double x, double min, double max)
+{
+    return MIN(MAX(x, min), max);
 }
 
 static int is_double_equal(double x, double y)
