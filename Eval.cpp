@@ -64,17 +64,17 @@ static ErrorCode node_eval_(Node* node, Variables* vars, double* ans_eval,
 
 static ErrorCode var_eval(Node* node, Variables* vars, double* ans_eval)
 {
-    if (!vars->valid[(int)node->value]) {
-        printf(print_lcyan("Input value of %s: "), vars->names[(int)node->value]);
-        int count_read = scanf("%lf", &vars->value[(int)node->value]);
+    if (!vars->var[(int)node->value].valid) {
+        printf(print_lcyan("Input value of %s: "), vars->var[(int)node->value].name);
+        int count_read = scanf("%lf", &vars->var[(int)node->value].value);
         while (count_read != 1) {
             clean_stdin();
             printf(print_lred("Wrong argument, you should input double, try again: "));
-            count_read = scanf("%lf", &vars->value[(int)node->value]);
+            count_read = scanf("%lf", &vars->var[(int)node->value].value);
         }
-        vars->valid[(int)node->value] = 1;
+        vars->var[(int)node->value].valid = 1;
     }
-    *ans_eval = vars->value[(int)node->value];
+    *ans_eval = vars->var[(int)node->value].value;
 
     return ERROR_NO;
 }

@@ -10,7 +10,6 @@
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
 static const int MAX_SIZE_INPUT = 500;
-static const int POISON_VALUE = -0xbe;
 
 static ErrorCode tree_read_     (Node** node, Variables* vars, char** buf, int* childs, int *dep);
 static ErrorCode vars_read_     (Variables* vars, char** buf);
@@ -102,7 +101,6 @@ static ErrorCode vars_read_(Variables* vars, char** buf)
 
     ErrorCode err = ERROR_NO;
 
-    int count_vars = vars->count;
     while (**buf != '\0') {
         *buf = skip_spaces(*buf);
 
@@ -111,9 +109,9 @@ static ErrorCode vars_read_(Variables* vars, char** buf)
         if (err) return err;
 
         int is_var = 0;
-        for (int i = 0; i < count_vars; i++) {
-            if (strcmp(vars->names[i], str) == 0) {
-                if (vars->valid[i] == 1) return ERROR_DUPLICATE_VAR;
+        for (int i = 0; i < vars->count; i++) {
+            if (strcmp(vars->var[i].name, str) == 0) {
+                if (vars->var[i].valid == 1) return ERROR_DUPLICATE_VAR;
 
                 *buf = skip_spaces(*buf);
                 if (**buf != '=') return ERROR_INVALID_INPUT;
@@ -124,8 +122,8 @@ static ErrorCode vars_read_(Variables* vars, char** buf)
                 err = get_arg(buf, value);
                 if (err) return err;
 
-                vars->value[i] = atof(value);
-                vars->valid[i] = 1;
+                vars->var[i].value = atof(value);
+                vars->var[i].valid = 1;
 
                 is_var = 1;
                 break;
@@ -137,16 +135,9 @@ static ErrorCode vars_read_(Variables* vars, char** buf)
         }
     }
 
-    vars->capacity = count_vars;
-    
-    vars->names = (char**)realloc(vars->names, vars->capacity * sizeof(char*));
-    if (!vars->names) return ERROR_ALLOC_FAIL;
-
-    vars->valid = (int*)realloc(vars->valid, vars->capacity * sizeof(int));
-    if (!vars->valid) return ERROR_ALLOC_FAIL;
-
-    vars->value = (double*)realloc(vars->value, vars->capacity * sizeof(double));
-    if (!vars->value) return ERROR_ALLOC_FAIL;
+    vars->capacity = vars->count;
+    vars->var = (Variable*)realloc(vars->var, vars->capacity * sizeof(Variable));
+    if (!vars->var) return ERROR_ALLOC_FAIL;
 
     return ERROR_NO;
 }
@@ -218,7 +209,7 @@ static ErrorCode write_arg(Node* node, Variables* vars, char* str, TypeData type
     if (type_arg == TYPE_VAR) {
         int was = 0;
         for (int i = 0; i < vars->count; i++) {
-            if (strcmp(vars->names[i], str) == 0) {
+            if (strcmp(vars->var[i].name, str) == 0) {
                 node->value = i;
                 was = 1;
                 break;
@@ -226,8 +217,8 @@ static ErrorCode write_arg(Node* node, Variables* vars, char* str, TypeData type
         }
         if (!was) {
             node->value = vars->count;
-            vars->names[vars->count] = strdup(str);
-            if (!vars->names[vars->count]) return ERROR_STRDUP;
+            vars->var[vars->count].name = strdup(str);
+            if (!vars->var[vars->count].name) return ERROR_STRDUP;
             vars->count++;
             if (vars->count >= vars->capacity - 1) {
                 err = vars_increase_cap(vars);
@@ -297,19 +288,6 @@ static char* skip_word(char* s)
     return s;
 }
 
-ErrorCode node_init(Node** node)
-{
-    if (!node) return ERROR_INVALID_TREE;
-    
-    *node = (Node*)calloc(1, sizeof(Node));
-    if (!*node) return ERROR_ALLOC_FAIL;
-
-    (*node)->type_value = TYPE_ERR;
-    (*node)->value = POISON_VALUE;
-
-    return ERROR_NO;
-}
-
 ErrorCode file_to_buf(const char* name_file, char** buf)
 {
     if (!name_file) return ERROR_OPEN_FILE;
@@ -352,18 +330,11 @@ static ErrorCode vars_increase_cap(Variables* vars)
     assert(vars);
 
     vars->capacity = (int)(vars->capacity * MULTIPLIER_CAPACITY);
-    vars->names = (char**)realloc(vars->names, vars->capacity * sizeof(char*));
-    if (!vars->names) return ERROR_ALLOC_FAIL;
+    vars->var = (Variable*)realloc(vars->var, vars->capacity * sizeof(Variable));
+    if (!vars->var) return ERROR_ALLOC_FAIL;
 
-    vars->valid = (int*)realloc(vars->valid, vars->capacity * sizeof(int));
-    if (!vars->valid) return ERROR_ALLOC_FAIL;
-
-    for (int i = vars->count; i < vars->capacity; i++) {
-        vars->valid[i] = 0;
-    }
-
-    vars->value = (double*)realloc(vars->value, vars->capacity * sizeof(double));
-    if (!vars->value) return ERROR_ALLOC_FAIL;
+    for (int i = vars->count; i < vars->capacity; i++)
+        vars->var[i].valid = 0;
 
     return ERROR_NO;
 }

@@ -1,8 +1,9 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "Tree.h"
-#include "Diff.h"
+#include "Output.h"
 
 #define MAX(a, b) ((a) > (b)) ? (a) : (b)
 
@@ -16,27 +17,33 @@ static const int POISON_INT = -1;
 static ErrorCode tree_delete_(Node* node);
 static ErrorCode tree_verify_(Node* node, int *color, int num);
 
-ErrorCode tree_new(Tree** tree)
+ErrorCode tree_new(Tree** tree, const char* tree_name)
 {
     if (!tree && !*tree) return ERROR_INVALID_TREE;
 
     *tree = (Tree*)calloc(1, sizeof(Tree));
     if (!*tree) return ERROR_ALLOC_FAIL;
 
+    (*tree)->name = strdup(tree_name);
+    if (!(*tree)->name) return ERROR_ALLOC_FAIL;
+    ////////////////////////////////////////////////////////////////////
     (*tree)->variables = (Variables*)calloc(1, sizeof(Variables));
     if (!(*tree)->variables) return ERROR_ALLOC_FAIL;
 
-    (*tree)->variables->names = (char**)calloc(DEFAULT_CAPACITY, sizeof(char*));
-    if (!(*tree)->variables->names) return ERROR_ALLOC_FAIL;
-
-    (*tree)->variables->valid = (int*)calloc(DEFAULT_CAPACITY, sizeof(int));
-    if (!(*tree)->variables->valid) return ERROR_ALLOC_FAIL;
-
-    (*tree)->variables->value = (double*)calloc(DEFAULT_CAPACITY, sizeof(double));
-    if (!(*tree)->variables->value) return ERROR_ALLOC_FAIL;
+    (*tree)->variables->var = (Variable*)calloc(1, sizeof(Variable));
+    if (!(*tree)->variables->var) return ERROR_ALLOC_FAIL;
 
     (*tree)->variables->count = 0;
     (*tree)->variables->capacity = DEFAULT_CAPACITY;
+    ////////////////////////////////////////////////////////////////////
+    (*tree)->output_info = (OutputInfo*)calloc(1, sizeof(OutputInfo));
+    if (!(*tree)->output_info) return ERROR_ALLOC_FAIL;
+
+    (*tree)->output_info->number_graph_dump = 1;
+    (*tree)->output_info->number_tex_dump =   1;
+    (*tree)->output_info->number_html_dump =  1;
+
+    prepare_dump_dir(*tree);
 
     return ERROR_NO;
 }
@@ -48,13 +55,19 @@ ErrorCode tree_delete(Tree* tree)
     ErrorCode err = tree_delete_(tree->root);
     if (err) return err;
 
-    for (int i = 0; i < tree->variables->count; i++)
-        free(tree->variables->names[i]);
-    tree->variables->count = POISON_INT;
-    free(tree->variables->names);
-    free(tree->variables->valid);
-    free(tree->variables->value);
+    for (int i = 0; i < tree->variables->capacity; i++) {
+        free(tree->variables->var[i].name);
+    }
+    
+    tree->variables->count =                POISON_INT;
+    tree->variables->capacity =             POISON_INT;
+    tree->output_info->number_graph_dump =  POISON_INT;
+    tree->output_info->number_tex_dump =    POISON_INT;
+    tree->output_info->number_html_dump =   POISON_INT;
+    free(tree->variables->var);
     free(tree->variables);
+    free(tree->output_info);
+    free(tree->name);
     free(tree);
     
     return ERROR_NO;
@@ -74,6 +87,24 @@ static ErrorCode tree_delete_(Node* node)
     node->dep =  POISON_INT;
 
     free(node);
+    return ERROR_NO;
+}
+
+ErrorCode tree_copy(Tree* tree, const char* name, Tree** new_tree)
+{
+    if (!tree) return ERROR_INVALID_TREE;
+    
+    ErrorCode err = ERROR_NO;
+
+    err = tree_new(new_tree, name);
+    if (err) return err;
+
+    err = node_copy(tree->root, &(*new_tree)->root);
+    if (err) return err;
+
+    err = variables_copy(tree->variables, &(*new_tree)->variables);
+    if (err) return err;
+
     return ERROR_NO;
 }
 

@@ -3,6 +3,7 @@
 
 #include "Operators.h"
 #include "Variables.h"
+#include "Errors.h"
 
 enum TypeData {
     TYPE_ERR = -1,
@@ -19,6 +20,9 @@ struct Node {
     Node* left;
     Node* right;
 };
+
+ErrorCode node_init (Node** node);
+ErrorCode node_copy (Node* node, Node** new_node);
 
 #include "Tree.h"
 

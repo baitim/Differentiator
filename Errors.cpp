@@ -8,7 +8,7 @@ static void print_error(int error, const char* s);
 void err_dump_(int err, const char* file, const char* func, int line)
 {
     if (err == ERROR_NO) {
-        fprintf(stderr, print_lgreen("dump: OK\n"));
+        // fprintf(stderr, print_lgreen("dump: OK\n"));
         return;
     }
 

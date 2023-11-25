@@ -15,19 +15,13 @@ int main()
 
     ErrorCode err = ERROR_NO;
     const char name_data_file[] = "equation.txt";
-    int number_graph_dump = 1;
-    int number_tex_dump =   1;
-    int number_html_dump =  1;
     char* buf_file = nullptr;
     char* old_buf = nullptr;
     double ans_eval = -1;
     Tree* tree = nullptr;
-    int k = 0;
+    Tree* tree_test = nullptr;
 
-    err = prepare_dump_dir();
-    if (err) goto Final_err;
-
-    err = tree_new(&tree);
+    err = tree_new(&tree, "MainTree");
     if (err) goto Final_err;
 
     err = file_to_buf(name_data_file, &buf_file);
@@ -45,24 +39,22 @@ int main()
     err = tree_diff(tree);
     if (err) goto Final_err;
 
-    k = 5;
-    while (k-- > 0) {
-        err = tree_cmd_dump(tree);
-        if (err) goto Final_err;
+    err = tree_big_dump(tree);
+    if (err) goto Final_err;
 
-        err = tree_graph_dump(tree, &number_graph_dump);
-        if (err) goto Final_err;
+    err = tree_copy(tree, "TestTree", &tree_test);
+    if (err) goto Final_err;
 
-        err = tree_tex_dump(tree, &number_tex_dump);
-        if (err) goto Final_err;
-
-        err = tree_html_dump(number_graph_dump, &number_html_dump);
-        if (err) goto Final_err;
-    }
+    err = tree_big_dump(tree_test);
+    if (err) goto Final_err;
 
     err = tree_delete(tree);
     if (err) goto Final_err;
+    
+    err = tree_delete(tree_test);
+    if (err) goto Final_err;
 
+    
     goto Final_noerr;
 Final_err:
 
@@ -70,6 +62,9 @@ Final_err:
     return err;
 
 Final_noerr:
+
+    err_dump(err);
+    return err;
 
     printf(print_lblue("\nBye\n"));
 
