@@ -19,7 +19,6 @@ int main()
     char* old_buf = nullptr;
     double ans_eval = -1;
     Tree* tree = nullptr;
-    Tree* tree_test = nullptr;
 
     err = tree_new(&tree, "MainTree");
     if (err) goto Final_err;
@@ -32,6 +31,10 @@ int main()
     free(old_buf);
     if (err) goto Final_err;
 
+    prepare_dump_dir(tree);
+    err = tree_big_dump(tree);
+    if (err) goto Final_err;
+
     err = tree_eval(tree, &ans_eval);
     if (err) goto Final_err;
     printf(print_lcyan("ans_eval = %lf\n"), ans_eval);
@@ -39,19 +42,7 @@ int main()
     err = tree_diff(tree);
     if (err) goto Final_err;
 
-    err = tree_big_dump(tree);
-    if (err) goto Final_err;
-
-    err = tree_copy(tree, "TestTree", &tree_test);
-    if (err) goto Final_err;
-
-    err = tree_big_dump(tree_test);
-    if (err) goto Final_err;
-
     err = tree_delete(tree);
-    if (err) goto Final_err;
-    
-    err = tree_delete(tree_test);
     if (err) goto Final_err;
 
     
@@ -62,9 +53,6 @@ Final_err:
     return err;
 
 Final_noerr:
-
-    err_dump(err);
-    return err;
 
     printf(print_lblue("\nBye\n"));
 

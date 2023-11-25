@@ -88,7 +88,7 @@ ErrorCode tree_graph_dump(Tree* tree)
     if (!tree) return ERROR_INVALID_TREE;
 
     ErrorCode err = tree_verify(tree->root);
-    if (err) return err;;
+    if (err) return err;
 
     char py_path[MAX_SIZE_NAME_DUMP] = "";
     snprintf(py_path, MAX_SIZE_NAME_DUMP, "%s/py/%s%d", tree->name, tree->name, 
@@ -107,15 +107,14 @@ ErrorCode tree_graph_dump(Tree* tree)
     snprintf(graph_path, MAX_SIZE_NAME_DUMP, "%s/graph/%s%d", tree->name, tree->name, 
                                               tree->output_info->number_graph_dump);
 
-    EvalPoints graph = {-100, 100, 50, -50, 0.1f};
+    EvalPoints graph = {-1, 1, 1, -1, 0.001f};
 
     fprintf(dump_file,  "import matplotlib.pyplot as plt\n");
 
     err = tree_write_points(tree, &graph, dump_file);
     if (err) return err;
 
-    fprintf(dump_file, "plt.scatter(x, y)\n"
-                       "plt.plot(x, y)\n");
+    fprintf(dump_file, "plt.plot(x, y)\n");
     fprintf(dump_file, "plt.xlim(%d, %d)\n"
                        "plt.ylim(%d, %d)\n",
                         graph.left_board - 1, graph.right_board + 1,
@@ -208,8 +207,11 @@ static ErrorCode tree_cmd_dump_(Node* node, Variables* vars, int dep)
                 fprintf(stderr, print_lyellow("%s\n"), OPs[i].name);
         }
     } else if (node->type_value == TYPE_VAR) {
-        fprintf(stderr, print_lgreen("%s = %.2lf\n"), vars->var[(int)node->value].name, 
-                                      vars->var[(int)node->value].value);
+        if (vars->var[(int)node->value].valid)
+            fprintf(stderr, print_lgreen("%s = %.2lf\n"), vars->var[(int)node->value].name, 
+                                          vars->var[(int)node->value].value);
+        else 
+            fprintf(stderr, print_lgreen("%s\n"), vars->var[(int)node->value].name);
     }
 
     if (node->right) tree_cmd_dump_(node->right, vars, dep + 1);
@@ -300,7 +302,11 @@ static ErrorCode tree_png_dump_make_node(Node* node, Variables* vars, FILE* dump
             }
         }
     } else if (node->type_value == TYPE_VAR) {
-        fprintf(dump_file, "%s = %.2lf", vars->var[(int)node->value].name, vars->var[(int)node->value].value);
+        if (vars->var[(int)node->value].valid)
+            fprintf(dump_file, "%s = %.2lf", vars->var[(int)node->value].name, 
+                                vars->var[(int)node->value].value);
+        else 
+            fprintf(dump_file, "%s", vars->var[(int)node->value].name);
         fprintf(dump_file, " | { childs = %d | dep = %d } }\", fillcolor = \"#f79e19\"];\n",
                             node->size, node->dep);
     }

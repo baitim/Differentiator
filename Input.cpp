@@ -5,11 +5,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "ANSI_colors.h"
 #include "Input.h"
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
-
-static const int MAX_SIZE_INPUT = 500;
 
 static ErrorCode tree_read_     (Node** node, Variables* vars, char** buf, int* childs, int *dep);
 static ErrorCode vars_read_     (Variables* vars, char** buf);
@@ -37,6 +36,29 @@ ErrorCode tree_read(Tree* tree, char** buf)
     err = vars_read_(tree->variables, buf);
     if (err) return err;
 
+    return ERROR_NO;
+}
+
+ErrorCode get_var(Variables* vars, int number_var)
+{
+    if (!vars->var[number_var].valid) {
+        printf(print_lcyan("Input value of %s: "), vars->var[number_var].name);
+        int count_read = scanf("%lf", &vars->var[number_var].value);
+        while (count_read != 1) {
+            clean_stdin();
+            printf(print_lred("Wrong argument, you should input double, try again: "));
+            count_read = scanf("%lf", &vars->var[number_var].value);
+        }
+        vars->var[number_var].valid = 1;
+    }
+
+    return ERROR_NO;
+}
+
+ErrorCode clean_stdin()
+{
+    while (getchar() != '\n')
+        ;
     return ERROR_NO;
 }
 

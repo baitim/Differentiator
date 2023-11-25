@@ -44,8 +44,6 @@ ErrorCode tree_new(Tree** tree, const char* tree_name)
     (*tree)->output_info->number_tex_dump =   1;
     (*tree)->output_info->number_html_dump =  1;
 
-    prepare_dump_dir(*tree);
-
     return ERROR_NO;
 }
 
