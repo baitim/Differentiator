@@ -271,14 +271,17 @@ static ErrorCode is_number(char* str, int* is_num)
 {
     int i = 0;
     int count_dot = 0;
+    int count_minus = 0;
     while (str[i] != '\0' && !isspace(str[i])) {
-        if (str[i] == '.') {
+        if (str[i] == '-') {
+            count_minus = i;
+        } else if (str[i] == '.') {
             count_dot++;
         } else if (str[i] < '0' || str[i] > '9') {
             (*is_num) = 0;
             return ERROR_NO;
         }
-        if (count_dot > 1 || (count_dot == 1 && i == 0))
+        if (count_dot >   1 || (count_dot ==   1 && i == 0) || count_minus > 0)
             return ERROR_READ_INPUT;
         i++;
     }

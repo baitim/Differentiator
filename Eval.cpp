@@ -83,22 +83,13 @@ static ErrorCode op_eval(Node* node, double* ans_eval, double left_eval, double 
     assert(node);
 
     switch ((int)node->value) {
-        case (OP_ADD) :
-            *ans_eval = left_eval + right_eval;
-            break;
-        case (OP_SUB) :
-            *ans_eval = left_eval - right_eval;
-            break;
-        case (OP_MUL) :
-            *ans_eval = left_eval * right_eval;
-            break;
+        case (OP_ADD) : *ans_eval = left_eval + right_eval;             break;
+        case (OP_SUB) : *ans_eval = left_eval - right_eval;             break;
+        case (OP_MUL) : *ans_eval = left_eval * right_eval;             break;
         case (OP_DIV) :
             if (is_double_equal(right_eval, 0.f))
                 return ERROR_DIVIDED_NULL;
             *ans_eval = left_eval / right_eval;
-            break;
-        case (OP_SQRT) :
-            *ans_eval = sqrt(left_eval);
             break;
         case (OP_POW) :
             if (is_double_equal(right_eval, int(right_eval)))
@@ -106,12 +97,21 @@ static ErrorCode op_eval(Node* node, double* ans_eval, double left_eval, double 
             else
                 *ans_eval = pow(left_eval, right_eval);
             break;
-        case (OP_SIN) :
-            *ans_eval = sin(left_eval);
-            break;
-        case (OP_COS) :
-            *ans_eval = cos(left_eval);
-            break;
+        case (OP_LOG) :  *ans_eval = log(left_eval) / log(right_eval);  break;
+        case (OP_LN) :   *ans_eval = log(left_eval);                    break;
+        case (OP_SQRT) : *ans_eval = sqrt(left_eval);                   break;
+        case (OP_SIN) :  *ans_eval = sin(left_eval);                    break;
+        case (OP_COS) :  *ans_eval = cos(left_eval);                    break;
+        case (OP_TG) :   *ans_eval = tan(left_eval);                    break;
+        case (OP_CTG) :  *ans_eval = 1 / tan(left_eval);                break;
+        case (OP_ASIN) : *ans_eval = asin(left_eval);                   break;
+        case (OP_ACOS) : *ans_eval = acos(left_eval);                   break;
+        case (OP_ATG) :  *ans_eval = atan(left_eval);                   break;
+        case (OP_ACTG) : *ans_eval = atan(1 / left_eval);               break;
+        case (OP_SH) :   *ans_eval = sinh(left_eval);                   break;
+        case (OP_CH) :   *ans_eval = cosh(left_eval);                   break;
+        case (OP_TH) :   *ans_eval = tanh(left_eval);                   break;
+        case (OP_CTH) :  *ans_eval = 1 / tanh(left_eval);               break;
         default :
             assert(0);
     }

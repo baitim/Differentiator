@@ -397,6 +397,8 @@ ErrorCode tree_tex_dump(Tree* tree)
     struct tm *now = localtime(&mytime);
 
     fprintf(dump_file, "\\documentclass[a4paper,12pt]{article}\n\n"
+                       "\\usepackage{amsmath}\n"
+                       "\\DeclareMathOperator\\arcctan{arcctan}"
                        "\\author{Baidiusenov Timur}\n"
                        "\\title{%s}\n"
                        "\\date{Date: %d.%d.%d, Time %d:%d:%d}\n"
@@ -482,25 +484,14 @@ static ErrorCode tree_equation_dump(Node* node, Variables* vars, FILE* dump_file
         fprintf(dump_file, "%.2lf", node->value);
     } else if (node->type_value == TYPE_OP) {
         switch ((int)node->value) {
-            case (OP_ADD) :
-                fprintf(dump_file, " + ");
-                break;
-            case (OP_SUB) :
-                fprintf(dump_file, " - ");
-                break;
-            case (OP_MUL) :
-                fprintf(dump_file, " \\cdot ");
-                break;
-            case (OP_DIV) :
-                break;
-            case (OP_SQRT) :
-                break;
-            case (OP_POW) :
-                fprintf(dump_file, "^");
-                break;
-            case (OP_SIN) :
-                break;
-            case (OP_COS) :
+            case (OP_ADD) : fprintf(dump_file, " + ");      break;
+            case (OP_SUB) : fprintf(dump_file, " - ");      break;
+            case (OP_MUL) : fprintf(dump_file, " \\cdot "); break;
+            case (OP_DIV) :                                 break;
+            case (OP_POW) : fprintf(dump_file, "^");        break;
+            case (OP_LOG) :  case (OP_LN) :  case (OP_SQRT) : case (OP_SIN) :  case (OP_COS) :
+            case (OP_TG) :   case (OP_CTG) : case (OP_ASIN) : case (OP_ACOS) : case (OP_ATG) : 
+            case (OP_ACTG) : case (OP_SH) :  case (OP_CH) :   case (OP_TH) :   case (OP_CTH) : 
                 break;
             default :
                 assert(0);
@@ -526,22 +517,34 @@ static ErrorCode write_left_parenthesis(Node* node, FILE* dump_file, Branch bran
     assert(dump_file);
 
     if (par_type == TYPE_OP) {
-        if (par_op == OP_DIV) {
-            if (branch == BRANCH_RIGHT)
-                fprintf(dump_file, "{");
-            if (branch == BRANCH_LEFT)
-                fprintf(dump_file, "\\frac{");
-        }
-        if (par_op == OP_MUL && node->dep > 1)
+        if (par_op == OP_DIV && branch == BRANCH_LEFT)  fprintf(dump_file, "\\frac{");
+        if (par_op == OP_DIV && branch == BRANCH_RIGHT) fprintf(dump_file, "{");
+        if (par_op == OP_POW) fprintf(dump_file, "{");
+        if (par_op == OP_LOG && branch == BRANCH_LEFT)  fprintf(dump_file, "\\log_{");
+        if (par_op == OP_LOG && branch == BRANCH_RIGHT) fprintf(dump_file, "{");
+        if (par_op == OP_LN)   fprintf(dump_file, "\\ln{");
+        if (par_op == OP_SQRT) fprintf(dump_file, "\\sqrt{");
+        if (par_op == OP_SIN)  fprintf(dump_file, "\\sin{");
+        if (par_op == OP_COS)  fprintf(dump_file, "\\cos{");
+        if (par_op == OP_TG)   fprintf(dump_file, "\\tan{");
+        if (par_op == OP_CTG)  fprintf(dump_file, "\\ctan{");
+        if (par_op == OP_ASIN) fprintf(dump_file, "\\arcsin{");
+        if (par_op == OP_ACOS) fprintf(dump_file, "\\arccos{");
+        if (par_op == OP_ATG)  fprintf(dump_file, "\\arctan{");
+        if (par_op == OP_ACTG) fprintf(dump_file, "\\arcctan{");
+        if (par_op == OP_SH)   fprintf(dump_file, "\\sinh{");
+        if (par_op == OP_CH)   fprintf(dump_file, "\\cosh{");
+        if (par_op == OP_TH)   fprintf(dump_file, "\\tanh{");
+        if (par_op == OP_CTH)  fprintf(dump_file, "\\coth{");
+
+        if ((par_op == OP_MUL || par_op == OP_POW  || par_op == OP_LOG || 
+            par_op == OP_LN   || par_op == OP_SQRT || par_op == OP_SIN || 
+            par_op == OP_COS  || par_op == OP_TG   || par_op == OP_CTG ||
+            par_op == OP_ASIN || par_op == OP_ACOS || par_op == OP_ATG ||
+            par_op == OP_ACTG || par_op == OP_SH   || par_op == OP_CH  ||
+            par_op == OP_TH || par_op == OP_CTH)
+             && OPs[(int)node->value].ops_num > 1 && node->dep > 1)
             fprintf(dump_file, "(");
-        if (par_op == OP_SQRT)
-            fprintf(dump_file, "\\sqrt{");
-        if (par_op == OP_POW)
-            fprintf(dump_file, "{");
-        if (par_op == OP_SIN)
-            fprintf(dump_file, "\\sin{");
-        if (par_op == OP_COS)
-            fprintf(dump_file, "\\cos{");
     }
 
     return ERROR_NO;
@@ -554,12 +557,22 @@ static ErrorCode write_right_parenthesis(Node* node, FILE* dump_file,
     assert(dump_file);
     
     if (par_type == TYPE_OP) {
-        if (par_op == OP_DIV || par_op == OP_SQRT || par_op == OP_POW || 
-            par_op == OP_SIN || par_op == OP_COS)
-            fprintf(dump_file, "}");
-
-        if (par_op == OP_MUL && node->dep > 1)
+        if ((par_op == OP_MUL || par_op == OP_POW  || par_op == OP_LOG || 
+            par_op == OP_LN   || par_op == OP_SQRT || par_op == OP_SIN || 
+            par_op == OP_COS  || par_op == OP_TG   || par_op == OP_CTG ||
+            par_op == OP_ASIN || par_op == OP_ACOS || par_op == OP_ATG ||
+            par_op == OP_ACTG || par_op == OP_SH   || par_op == OP_CH  ||
+            par_op == OP_TH || par_op == OP_CTH)
+             && OPs[(int)node->value].ops_num > 1 && node->dep > 1)
             fprintf(dump_file, ")");
+
+        if (par_op == OP_DIV  || par_op == OP_POW  || par_op == OP_LOG || 
+            par_op == OP_LN   || par_op == OP_SQRT || par_op == OP_SIN || 
+            par_op == OP_COS  || par_op == OP_TG   || par_op == OP_CTG ||
+            par_op == OP_ASIN || par_op == OP_ACOS || par_op == OP_ATG ||
+            par_op == OP_ACTG || par_op == OP_SH   || par_op == OP_CH  ||
+            par_op == OP_TH || par_op == OP_CTH)
+            fprintf(dump_file, "}");
     }
 
     return ERROR_NO;
