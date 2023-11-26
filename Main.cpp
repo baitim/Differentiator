@@ -44,7 +44,6 @@ int main()
 
     err = tree_delete(tree);
     if (err) goto Final_err;
-
     
     goto Final_noerr;
 Final_err:

@@ -107,7 +107,7 @@ ErrorCode tree_graph_dump(Tree* tree)
     snprintf(graph_path, MAX_SIZE_NAME_DUMP, "%s/graph/%s%d", tree->name, tree->name, 
                                               tree->output_info->number_graph_dump);
 
-    EvalPoints graph = {-1, 1, 1, -1, 0.001f};
+    EvalPoints graph = {-5, 20, 300, -5, 0.05f};
 
     fprintf(dump_file,  "import matplotlib.pyplot as plt\n");
 
@@ -115,10 +115,10 @@ ErrorCode tree_graph_dump(Tree* tree)
     if (err) return err;
 
     fprintf(dump_file, "plt.plot(x, y)\n");
-    fprintf(dump_file, "plt.xlim(%d, %d)\n"
-                       "plt.ylim(%d, %d)\n",
-                        graph.left_board - 1, graph.right_board + 1,
-                        graph.min_value - 1, graph.max_value + 1);
+    fprintf(dump_file, "plt.xlim(%lf, %lf)\n"
+                       "plt.ylim(%lf, %lf)\n",
+                        graph.left_board, graph.right_board,
+                        graph.min_value,  graph.max_value);
 
     char *name_graph_file = nullptr;
     err = make_name_file(graph_path, ".png", &name_graph_file);
@@ -159,13 +159,19 @@ static ErrorCode tree_write_points(Tree* tree, EvalPoints* graph, FILE* dump_fil
 
     fprintf(dump_file, "x = [");
     for (int i = 0; i < size - 1; i++)
-        fprintf(dump_file, "%lf, ", x[i]);
-    fprintf(dump_file, "%lf]\n", x[size - 1]);
+        if (!is_double_equal(graph->max_value * 2, y[i]))
+            fprintf(dump_file, "%lf, ", x[i]);
+    if (!is_double_equal(graph->max_value * 2, y[size - 1]))
+        fprintf(dump_file, "%lf", x[size - 1]);
+    fprintf(dump_file, "]\n");
 
     fprintf(dump_file, "y = [");
     for (int i = 0; i < size - 1; i++)
-        fprintf(dump_file, "%lf, ", y[i]);
-    fprintf(dump_file, "%lf]\n", y[size - 1]);
+        if (!is_double_equal(graph->max_value * 2, y[i]))
+            fprintf(dump_file, "%lf, ", y[i]);
+    if (!is_double_equal(graph->max_value * 2, y[size - 1]))
+        fprintf(dump_file, "%lf", y[size - 1]);
+    fprintf(dump_file, "]\n");
 
     free(x);
     free(y);
@@ -487,6 +493,15 @@ static ErrorCode tree_equation_dump(Node* node, Variables* vars, FILE* dump_file
                 break;
             case (OP_DIV) :
                 break;
+            case (OP_SQRT) :
+                break;
+            case (OP_POW) :
+                fprintf(dump_file, "^");
+                break;
+            case (OP_SIN) :
+                break;
+            case (OP_COS) :
+                break;
             default :
                 assert(0);
     }
@@ -519,6 +534,14 @@ static ErrorCode write_left_parenthesis(Node* node, FILE* dump_file, Branch bran
         }
         if (par_op == OP_MUL && node->dep > 1)
             fprintf(dump_file, "(");
+        if (par_op == OP_SQRT)
+            fprintf(dump_file, "\\sqrt{");
+        if (par_op == OP_POW)
+            fprintf(dump_file, "{");
+        if (par_op == OP_SIN)
+            fprintf(dump_file, "\\sin{");
+        if (par_op == OP_COS)
+            fprintf(dump_file, "\\cos{");
     }
 
     return ERROR_NO;
@@ -531,7 +554,8 @@ static ErrorCode write_right_parenthesis(Node* node, FILE* dump_file,
     assert(dump_file);
     
     if (par_type == TYPE_OP) {
-        if (par_op == OP_DIV)
+        if (par_op == OP_DIV || par_op == OP_SQRT || par_op == OP_POW || 
+            par_op == OP_SIN || par_op == OP_COS)
             fprintf(dump_file, "}");
 
         if (par_op == OP_MUL && node->dep > 1)

@@ -5,10 +5,10 @@
 #include "Tree.h"
 
 struct EvalPoints {
-    const int left_board;
-    const int right_board;
-    const int max_value;
-    const int min_value;
+    const double left_board;
+    const double right_board;
+    const double max_value;
+    const double min_value;
     const double step_values;
 };
 

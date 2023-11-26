@@ -17,6 +17,7 @@ static ErrorCode node_eval_ (Node* node, Variables* vars, double* ans_eval,
                              double left_eval, double right_eval);
 static ErrorCode op_eval    (Node* node, double* ans_eval, double left_eval, double right_eval);
 static double norm_double   (double x, double min, double max);
+static double powf          (double x, int st);
 static int is_double_equal  (double x, double y);
 
 ErrorCode tree_eval(Tree* tree, double* ans_eval)
@@ -96,6 +97,21 @@ static ErrorCode op_eval(Node* node, double* ans_eval, double left_eval, double 
                 return ERROR_DIVIDED_NULL;
             *ans_eval = left_eval / right_eval;
             break;
+        case (OP_SQRT) :
+            *ans_eval = sqrt(left_eval);
+            break;
+        case (OP_POW) :
+            if (is_double_equal(right_eval, int(right_eval)))
+                *ans_eval = powf(left_eval, (int)right_eval);
+            else
+                *ans_eval = pow(left_eval, right_eval);
+            break;
+        case (OP_SIN) :
+            *ans_eval = sin(left_eval);
+            break;
+        case (OP_COS) :
+            *ans_eval = cos(left_eval);
+            break;
         default :
             assert(0);
     }
@@ -123,12 +139,15 @@ ErrorCode tree_get_points(Tree* tree, EvalPoints* graph, double* x, double* y)
     for (int i = 0; i < max_ind; i++) {
         double x_value = i * graph->step_values + graph->left_board;
         new_tree->variables->var[num_var].value = x_value;
-        printf("%lf\n", new_tree->variables->var[num_var].value);
         x[i] = x_value;
         double y_value = 0;
         err = tree_eval(new_tree, &y_value);
         if (err) return err;
-        y[i] = norm_double(y_value, graph->min_value, graph->max_value);
+        double new_y = norm_double(y_value, graph->min_value, graph->max_value);
+        if (!is_double_equal(y_value, new_y)) {
+            y[i] = graph->max_value * 2; printf("%lf\n", x_value);
+        } else 
+            y[i] = new_y;
     }
 
     err = tree_delete(new_tree);
@@ -191,6 +210,14 @@ static ErrorCode get_num_eval_var(Tree* tree, int* num_var)
 static double norm_double(double x, double min, double max)
 {
     return MIN(MAX(x, min), max);
+}
+
+static double powf(double x, int st)
+{
+    if (st == 0) return 1;
+    if (st % 2 == 1) return x * powf(x, st - 1);
+    double z = powf(x, st / 2);
+    return z * z;
 }
 
 static int is_double_equal(double x, double y)

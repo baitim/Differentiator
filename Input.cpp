@@ -96,13 +96,16 @@ static ErrorCode tree_read_(Node** node, Variables* vars, char** buf, int* child
 
         (*childs)++;
         /////////////////////////////////////////////////////////
-        *buf = skip_spaces(*buf);
         int right_childs = 0;
         int right_dep = 0;
-        err = tree_read_(&(*node)->right, vars, buf, &right_childs, &right_dep);
-        if (err) return err;
         *buf = skip_spaces(*buf);
-        (*childs) += right_childs;
+        if (!(type_arg == TYPE_OP && OPs[(int)(*node)->value].ops_num == 1)) {
+            err = tree_read_(&(*node)->right, vars, buf, &right_childs, &right_dep);
+            if (err) return err;
+            (*childs) += right_childs;
+        } else {
+            *buf = skip_word(*buf); 
+        }
 
         (*node)->size = (*childs) - 1;
         (*dep) = (*node)->dep = MAX(left_dep, right_dep) + 1;
@@ -226,8 +229,8 @@ static ErrorCode write_arg(Node* node, Variables* vars, char* str, TypeData type
     }
 
     if (type_arg == TYPE_NUM)
-        node->value = atoi(str);
-    
+        node->value = atof(str);
+
     if (type_arg == TYPE_VAR) {
         int was = 0;
         for (int i = 0; i < vars->count; i++) {
@@ -267,11 +270,16 @@ static ErrorCode is_operator(char* str, int* is_oper)
 static ErrorCode is_number(char* str, int* is_num)
 {
     int i = 0;
+    int count_dot = 0;
     while (str[i] != '\0' && !isspace(str[i])) {
-        if (str[i] < '0' || str[i] > '9') {
+        if (str[i] == '.') {
+            count_dot++;
+        } else if (str[i] < '0' || str[i] > '9') {
             (*is_num) = 0;
             return ERROR_NO;
         }
+        if (count_dot > 1 || (count_dot == 1 && i == 0))
+            return ERROR_READ_INPUT;
         i++;
     }
     (*is_num) = 1;

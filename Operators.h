@@ -16,18 +16,19 @@ enum TypeOP {
 struct OP {
     TypeOP type_op;
     const char* name;
+    int ops_num;
 };
 
 const OP OPs[] = {
-    {OP_ERR,    "$"},
-    {OP_ADD,    "+"},
-    {OP_SUB,    "-"},
-    {OP_MUL,    "*"},
-    {OP_DIV,    "/"},
-    {OP_SQRT,   "sqrt"},
-    {OP_POW,    "^"},
-    {OP_SIN,    "sin"},
-    {OP_COS,    "cos"},
+    {OP_ERR,    "$",   -1},
+    {OP_ADD,    "+",    2},
+    {OP_SUB,    "-",    2},
+    {OP_MUL,    "*",    2},
+    {OP_DIV,    "/",    2},
+    {OP_SQRT,   "sqrt", 1},
+    {OP_POW,    "^",    2},
+    {OP_SIN,    "sin",  1},
+    {OP_COS,    "cos",  1},
 };
 const int COUNT_OPs = sizeof(OPs) / sizeof(OP);
 
