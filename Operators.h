@@ -1,7 +1,7 @@
 #ifndef OPERATORS_H
 #define OPERATORS_H
 
-enum TypeOP {
+enum TypeOperator {
     OP_ERR =  -1,
     OP_ADD =   1,
     OP_SUB =   2,
@@ -25,8 +25,8 @@ enum TypeOP {
     OP_CTH =  20,
 };
 
-struct OP {
-    TypeOP type_op;
+struct Operator {
+    TypeOperator type_op;
     const char* name;
     int ops_num;
 };
@@ -37,7 +37,7 @@ enum OperatorType {
     OP_TYPE_BIN =  2,
 };
 
-const OP OPs[] = {
+const Operator OPERATORS[] = {
     {OP_ERR,    "$",        OP_TYPE_ERR},
     {OP_ADD,    "+",        OP_TYPE_BIN},
     {OP_SUB,    "-",        OP_TYPE_BIN},
@@ -60,6 +60,6 @@ const OP OPs[] = {
     {OP_TH,     "th",       OP_TYPE_UN},
     {OP_CTH,    "cth",      OP_TYPE_UN},
 };
-const int COUNT_OPs = sizeof(OPs) / sizeof(OP);
+const int COUNT_OPs = sizeof(OPERATORS) / sizeof(Operator);
 
 #endif // OPERATORS_H

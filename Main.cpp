@@ -14,46 +14,51 @@ int main()
                        "# (c) BAIDUSENOV TIMUR, 2023\n\n"));
 
     ErrorCode err = ERROR_NO;
-    const char name_data_file[] = "equation.txt";
-    char* buf_file = nullptr;
-    char* old_buf = nullptr;
-    double ans_eval = -1;
+    const char name_data_file[] = "equation2.txt";
+    char* file_buffer = nullptr;
+    char* start_file_buffer = nullptr;
+    double eval_equation = -1;
     Tree* tree = nullptr;
+    Tree* tree_for_diff = nullptr;
 
     err = tree_new(&tree, "MainTree");
-    if (err) goto Final_err;
+    if (err) goto error;
 
-    err = file_to_buf(name_data_file, &buf_file);
-    if (err) goto Final_err;
+    err = file_to_buf(name_data_file, &file_buffer);
+    if (err) goto error;
 
-    old_buf = buf_file;
-    err = tree_read(tree, &buf_file);
-    free(old_buf);
-    if (err) goto Final_err;
+    start_file_buffer = file_buffer;
+    err = tree_read(tree, &file_buffer);
+    if (err) goto error;
 
     prepare_dump_dir(tree);
     err = tree_big_dump(tree);
-    if (err) goto Final_err;
+    if (err) goto error;
 
-    err = tree_eval(tree, &ans_eval);
-    if (err) goto Final_err;
-    printf(print_lcyan("ans_eval = %lf\n"), ans_eval);
+    err = tree_eval(tree, &eval_equation);
+    if (err) goto error;
+    printf(print_lcyan("eval_equation = %lf\n"), eval_equation);
 
-    err = tree_diff(tree);
-    if (err) goto Final_err;
+    err = tree_copy(tree, "TreeDiff", &tree_for_diff);
+    if (err) goto error;
 
-    err = tree_delete(tree);
-    if (err) goto Final_err;
-    
-    goto Final_noerr;
-Final_err:
+    err = tree_diff(tree_for_diff);
+    if (err) goto error;
 
-    err_dump(err);
-    return err;
-
-Final_noerr:
+    prepare_dump_dir(tree_for_diff);
+    err = tree_big_dump(tree_for_diff);
+    if (err) goto error;
 
     printf(print_lblue("\nBye\n"));
 
-    return 0;
+    goto finally;
+
+error:
+    err_dump(err);
+
+finally:
+    free(start_file_buffer);
+    tree_delete(tree_for_diff);
+    tree_delete(tree);
+    return err;
 }

@@ -2,12 +2,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <cstdlib>
-#include <math.h>
 #include <time.h>
 
 #include "ANSI_colors.h"
 #include "Output.h"
 #include "Node.h"
+#include "Math.h"
 #include "Eval.h"
 
 enum Branch {
@@ -18,21 +18,19 @@ enum Branch {
 
 const int MAX_SIZE_NAME_DUMP = 100;
 const int MAX_SIZE_COMMAND = 500;
-const double EPSILON = 1e-9;
 
 static ErrorCode tree_write_points          (Tree* tree, EvalPoints* graph, FILE* dump_file);
-static ErrorCode tree_cmd_dump_             (Node* node, Variables* vars, int dep);
-static ErrorCode tree_png_dump_make_node    (Node* node, Variables* vars, FILE* dump_file);
-static ErrorCode tree_png_dump_make_edge    (Node* node, FILE* dump_file);
-static ErrorCode tree_tex_dump_             (Node* node, Variables* vars, FILE* dump_file);
-static ErrorCode tree_equation_dump         (Node* node, Variables* vars, FILE* dump_file,
-                                             Branch branch, TypeData par_type, TypeOP par_op);
-static ErrorCode write_left_parenthesis     (Node* node, FILE* dump_file, Branch branch,
-                                             TypeData par_type, TypeOP par_op);
-static ErrorCode write_right_parenthesis    (Node* node, FILE* dump_file,
-                                             TypeData par_type, TypeOP par_op);
+static ErrorCode tree_cmd_dump_             (TreeNode* node, Variables* vars, int dep);
+static ErrorCode tree_png_dump_make_node    (TreeNode* node, Variables* vars, FILE* dump_file);
+static ErrorCode tree_png_dump_make_edge    (TreeNode* node, FILE* dump_file);
+static ErrorCode tree_tex_dump_             (TreeNode* node, Variables* vars, FILE* dump_file);
+static ErrorCode tree_equation_dump         (TreeNode* node, Variables* vars, FILE* dump_file,
+                                             Branch branch, TreeDataType par_type, TypeOperator par_op);
+static ErrorCode write_left_parenthesis     (TreeNode* node, FILE* dump_file, Branch branch,
+                                             TreeDataType par_type, TypeOperator par_op);
+static ErrorCode write_right_parenthesis    (TreeNode* node, FILE* dump_file,
+                                             TreeDataType par_type, TypeOperator par_op);
 static ErrorCode make_name_file             (char* buffer, const char *type, char** name_dump_file);
-static int is_double_equal                  (double x, double y);
 
 ErrorCode prepare_dump_dir(Tree* tree)
 {
@@ -107,7 +105,7 @@ ErrorCode tree_graph_dump(Tree* tree)
     snprintf(graph_path, MAX_SIZE_NAME_DUMP, "%s/graph/%s%d", tree->name, tree->name, 
                                               tree->output_info->number_graph_dump);
 
-    EvalPoints graph = {-5, 20, 300, -5, 0.05f};
+    EvalPoints graph = {-5, 20, 20, -5, 0.05f};
 
     fprintf(dump_file,  "import matplotlib.pyplot as plt\n");
 
@@ -117,7 +115,7 @@ ErrorCode tree_graph_dump(Tree* tree)
     fprintf(dump_file, "plt.plot(x, y)\n");
     fprintf(dump_file, "plt.xlim(%lf, %lf)\n"
                        "plt.ylim(%lf, %lf)\n",
-                        graph.left_board, graph.right_board,
+                        graph.left_border, graph.right_border,
                         graph.min_value,  graph.max_value);
 
     char *name_graph_file = nullptr;
@@ -144,13 +142,12 @@ static ErrorCode tree_write_points(Tree* tree, EvalPoints* graph, FILE* dump_fil
     ErrorCode err = tree_verify(tree->root);
     if (err) return err;
 
-    if (graph->right_board < graph->left_board) return tree_verify(tree->root);
+    if (graph->right_border < graph->left_border) return tree_verify(tree->root);
 
-    int size = (int)((double)(graph->right_board - graph->left_board) / graph->step_values) + 1;
+    int size = (int)((double)(graph->right_border - graph->left_border) / graph->step_values) + 1;
 
     double* x = (double*)calloc(size, sizeof(double));
     if (!x) return ERROR_ALLOC_FAIL;
-
     double* y = (double*)calloc(size, sizeof(double));
     if (!y) return ERROR_ALLOC_FAIL;
 
@@ -195,7 +192,7 @@ ErrorCode tree_cmd_dump(Tree* tree)
     return tree_verify(tree->root);
 }
 
-static ErrorCode tree_cmd_dump_(Node* node, Variables* vars, int dep)
+static ErrorCode tree_cmd_dump_(TreeNode* node, Variables* vars, int dep)
 {
     if (!node) return ERROR_INVALID_TREE;
 
@@ -209,8 +206,8 @@ static ErrorCode tree_cmd_dump_(Node* node, Variables* vars, int dep)
         fprintf(stderr, print_green("%.2lf\n"), node->value);
     } else if (node->type_value == TYPE_OP) {
         for (int i = 0; i < COUNT_OPs; i++) {
-            if (is_double_equal(OPs[i].type_op, node->value))
-                fprintf(stderr, print_lyellow("%s\n"), OPs[i].name);
+            if (is_double_equal(OPERATORS[i].type_op, node->value))
+                fprintf(stderr, print_lyellow("%s\n"), OPERATORS[i].name);
         }
     } else if (node->type_value == TYPE_VAR) {
         if (vars->var[(int)node->value].valid)
@@ -250,9 +247,9 @@ ErrorCode tree_png_dump(Tree* tree)
                        "labeljust = center, fontsize = 70, fontcolor = \"#e33e19\"];\n"
                        "\tgraph[dpi = 100];\n"
                        "\tbgcolor = \"#2F353B\";\n"
-                       "\tedge[minlen = 3, arrowsize = 1.5, penwidth = 3];\n"
+                       "\tedge[minlen = 3.5, arrowsize = 2.5, penwidth = 4];\n"
                        "\tnode[shape = \"rectangle\", style = \"rounded, filled\", height = 3, width = 2, "
-                       "fillcolor = \"#ab5b0f\", fontsize = 30, penwidth = 3.5, color = \"#941b1b\"]\n",
+                       "fillcolor = \"#ab5b0f\", width = 3, fontsize = 30, penwidth = 3.5, color = \"#941b1b\"]\n",
                         tree->name);
 
     err = tree_png_dump_make_node(tree->root, tree->variables, dump_file);
@@ -283,7 +280,7 @@ ErrorCode tree_png_dump(Tree* tree)
     return tree_verify(tree->root);
 }
 
-static ErrorCode tree_png_dump_make_node(Node* node, Variables* vars, FILE* dump_file)
+static ErrorCode tree_png_dump_make_node(TreeNode* node, Variables* vars, FILE* dump_file)
 {
     if (!node) return ERROR_INVALID_TREE;
 
@@ -297,14 +294,12 @@ static ErrorCode tree_png_dump_make_node(Node* node, Variables* vars, FILE* dump
                        "\t\tnode%p[label = \"{ ", node);
     if (node->type_value == TYPE_NUM) {
         fprintf(dump_file, "%.2lf", node->value);
-        fprintf(dump_file, " | { childs = %d | dep = %d } }\", fillcolor = \"#ab5b0f\"];\n",
-                            node->size, node->dep);
+        fprintf(dump_file, " | dep = %d }\", fillcolor = \"#ab5b0f\"];\n", node->depth);
     } else if (node->type_value == TYPE_OP) {
         for (int i = 0; i < COUNT_OPs; i++) {
-            if (is_double_equal(OPs[i].type_op, node->value)) {
-                fprintf(dump_file, "%s", OPs[i].name);
-                fprintf(dump_file, " | { childs = %d | dep = %d }}\", fillcolor = \"#e3964d\"];\n",
-                                    node->size, node->dep);
+            if (is_double_equal(OPERATORS[i].type_op, node->value)) {
+                fprintf(dump_file, "%s", OPERATORS[i].name);
+                fprintf(dump_file, " | dep = %d }\", fillcolor = \"#e3964d\"];\n", node->depth);
             }
         }
     } else if (node->type_value == TYPE_VAR) {
@@ -313,8 +308,7 @@ static ErrorCode tree_png_dump_make_node(Node* node, Variables* vars, FILE* dump
                                 vars->var[(int)node->value].value);
         else 
             fprintf(dump_file, "%s", vars->var[(int)node->value].name);
-        fprintf(dump_file, " | { childs = %d | dep = %d } }\", fillcolor = \"#f79e19\"];\n",
-                            node->size, node->dep);
+        fprintf(dump_file, " | dep = %d }\", fillcolor = \"#f79e19\"];\n", node->depth);
     }
     fprintf(dump_file, "\t}\n");
 
@@ -323,7 +317,7 @@ static ErrorCode tree_png_dump_make_node(Node* node, Variables* vars, FILE* dump
     return tree_verify(node);
 }
 
-static ErrorCode tree_png_dump_make_edge(Node* node, FILE* dump_file)
+static ErrorCode tree_png_dump_make_edge(TreeNode* node, FILE* dump_file)
 {
     if (!node) return ERROR_INVALID_TREE;
 
@@ -334,6 +328,8 @@ static ErrorCode tree_png_dump_make_edge(Node* node, FILE* dump_file)
     if (node->left)  fprintf(dump_file, "\tnode%p->node%p[color = yellow, labelangle = 45];\n", node, node->left);
     if (node->right) fprintf(dump_file, "\tnode%p->node%p[color = yellow, labelangle = 45];\n", node, node->right);
     if (node->right) tree_png_dump_make_edge(node->right, dump_file);
+
+    if (node->parent) fprintf(dump_file, "\tnode%p->node%p[color = \"#b6ff1a\", labelangle = 45];\n", node, node->parent);
 
     return tree_verify(node);
 }
@@ -440,7 +436,7 @@ ErrorCode tree_tex_dump(Tree* tree)
     return tree_verify(tree->root);
 }
 
-static ErrorCode tree_tex_dump_(Node* node, Variables* vars, FILE* dump_file)
+static ErrorCode tree_tex_dump_(TreeNode* node, Variables* vars, FILE* dump_file)
 {
     assert(node);
     assert(vars);
@@ -461,17 +457,17 @@ static ErrorCode tree_tex_dump_(Node* node, Variables* vars, FILE* dump_file)
     return ERROR_NO;
 }
 
-static ErrorCode tree_equation_dump(Node* node, Variables* vars, FILE* dump_file,
-                                    Branch branch, TypeData par_type, TypeOP par_op)
+static ErrorCode tree_equation_dump(TreeNode* node, Variables* vars, FILE* dump_file,
+                                    Branch branch, TreeDataType par_type, TypeOperator par_op)
 {
     if (!node) return ERROR_INVALID_TREE;
 
     ErrorCode err = tree_verify(node);
     if (err) return err;
 
-    TypeOP node_op = OP_ERR;
+    TypeOperator node_op = OP_ERR;
     if (node->type_value == TYPE_OP)
-        node_op = (TypeOP)(int)node->value;
+        node_op = (TypeOperator)(int)node->value;
 
     err = write_left_parenthesis(node, dump_file, branch, 
                                  par_type, par_op);
@@ -510,8 +506,8 @@ static ErrorCode tree_equation_dump(Node* node, Variables* vars, FILE* dump_file
     return tree_verify(node);
 }
 
-static ErrorCode write_left_parenthesis(Node* node, FILE* dump_file, Branch branch,
-                                        TypeData par_type, TypeOP par_op)
+static ErrorCode write_left_parenthesis(TreeNode* node, FILE* dump_file, Branch branch,
+                                        TreeDataType par_type, TypeOperator par_op)
 {
     assert(node);
     assert(dump_file);
@@ -543,15 +539,15 @@ static ErrorCode write_left_parenthesis(Node* node, FILE* dump_file, Branch bran
             par_op == OP_ASIN || par_op == OP_ACOS || par_op == OP_ATG ||
             par_op == OP_ACTG || par_op == OP_SH   || par_op == OP_CH  ||
             par_op == OP_TH || par_op == OP_CTH)
-             && OPs[(int)node->value].ops_num > 1 && node->dep > 1)
+            && OPERATORS[(int)node->value].ops_num > 1 && node->depth > 1)
             fprintf(dump_file, "(");
     }
 
     return ERROR_NO;
 }
 
-static ErrorCode write_right_parenthesis(Node* node, FILE* dump_file,
-                                         TypeData par_type, TypeOP par_op)
+static ErrorCode write_right_parenthesis(TreeNode* node, FILE* dump_file,
+                                         TreeDataType par_type, TypeOperator par_op)
 {
     assert(node);
     assert(dump_file);
@@ -563,7 +559,7 @@ static ErrorCode write_right_parenthesis(Node* node, FILE* dump_file,
             par_op == OP_ASIN || par_op == OP_ACOS || par_op == OP_ATG ||
             par_op == OP_ACTG || par_op == OP_SH   || par_op == OP_CH  ||
             par_op == OP_TH || par_op == OP_CTH)
-             && OPs[(int)node->value].ops_num > 1 && node->dep > 1)
+             && OPERATORS[(int)node->value].ops_num > 1 && node->depth > 1)
             fprintf(dump_file, ")");
 
         if (par_op == OP_DIV  || par_op == OP_POW  || par_op == OP_LOG || 
@@ -590,9 +586,4 @@ static ErrorCode make_name_file(char* buffer, const char *type, char** name_dump
     if (!(*name_dump_file)) return ERROR_ALLOC_FAIL;
 
     return ERROR_NO;
-}
-
-static int is_double_equal(double x, double y)
-{
-    return (fabs(x - y) <= EPSILON);
 }

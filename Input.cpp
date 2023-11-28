@@ -10,17 +10,17 @@
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
-static ErrorCode tree_read_     (Node** node, Variables* vars, char** buf, int* childs, int *dep);
+static ErrorCode tree_read_     (TreeNode** node, Variables* vars, char** buf, int *dep);
 static ErrorCode vars_read_     (Variables* vars, char** buf);
 static ErrorCode fsize          (const char* name_file, int* size_file);
 static ErrorCode get_arg        (char** buf, char* str);
-static ErrorCode check_type_arg (char* str, TypeData* type_arg);
-static ErrorCode write_arg      (Node* node, Variables* vars, char* str, TypeData type_arg);
+static ErrorCode check_type_arg (char* str, TreeDataType* type_arg);
+static ErrorCode write_arg      (TreeNode* node, Variables* vars, char* str, TreeDataType type_arg);
 static ErrorCode is_operator    (char* str, int* is_oper);
 static ErrorCode is_number      (char* str, int* is_num);
 static ErrorCode is_variable    (char* str, int* is_var);
-static char* skip_spaces        (char* s);
-static char* skip_word          (char* s);
+static char* skip_spaces        (char* ass);
+static char* skip_word          (char* sus);
 static ErrorCode vars_increase_cap(Variables* vars);
 
 ErrorCode tree_read(Tree* tree, char** buf)
@@ -28,9 +28,8 @@ ErrorCode tree_read(Tree* tree, char** buf)
     assert(buf);
     if (!tree) return ERROR_INVALID_TREE;
 
-    int childs = 0;
     int dep = 0;
-    ErrorCode err = tree_read_(&tree->root, tree->variables, buf, &childs, &dep);
+    ErrorCode err = tree_read_(&tree->root, tree->variables, buf, &dep);
     if (err) return err;
 
     err = vars_read_(tree->variables, buf);
@@ -62,7 +61,7 @@ ErrorCode clean_stdin()
     return ERROR_NO;
 }
 
-static ErrorCode tree_read_(Node** node, Variables* vars, char** buf, int* childs, int *dep)
+static ErrorCode tree_read_(TreeNode** node, Variables* vars, char** buf, int *dep)
 {
     if (!node) return ERROR_INVALID_TREE; 
     if (!buf) return ERROR_INVALID_BUF;
@@ -76,39 +75,36 @@ static ErrorCode tree_read_(Node** node, Variables* vars, char** buf, int* child
         (*buf)++;
 
         *buf = skip_spaces(*buf);
-        int left_childs = 0;
         int left_dep = 0;
-        err = tree_read_(&(*node)->left, vars, buf, &left_childs, &left_dep);
+        err = tree_read_(&(*node)->left, vars, buf, &left_dep);
         if (err) return err;
         *buf = skip_spaces(*buf);
-        (*childs) += left_childs;
         /////////////////////////////////////////////////////////
         char str[MAX_SIZE_INPUT] = "";
         err = get_arg(buf, str);
         if (err) return err;
 
-        TypeData type_arg = TYPE_ERR;
+        TreeDataType type_arg = TYPE_ERR;
         err = check_type_arg(str, &type_arg);
         if (err || type_arg == TYPE_ERR) return err;
 
         err = write_arg(*node, vars, str, type_arg);
         if (err) return err;
 
-        (*childs)++;
         /////////////////////////////////////////////////////////
-        int right_childs = 0;
         int right_dep = 0;
         *buf = skip_spaces(*buf);
-        if (!(type_arg == TYPE_OP && OPs[(int)(*node)->value].ops_num == 1)) {
-            err = tree_read_(&(*node)->right, vars, buf, &right_childs, &right_dep);
+        if (!(type_arg == TYPE_OP && OPERATORS[(int)(*node)->value].ops_num == 1)) {
+            err = tree_read_(&(*node)->right, vars, buf, &right_dep);
             if (err) return err;
-            (*childs) += right_childs;
         } else {
             *buf = skip_word(*buf); 
         }
 
-        (*node)->size = (*childs) - 1;
-        (*dep) = (*node)->dep = MAX(left_dep, right_dep) + 1;
+        (*dep) = (*node)->depth = MAX(left_dep, right_dep) + 1;
+
+        if ((*node)->left) (*node)->left->parent = *node;
+        if ((*node)->right) (*node)->right->parent = *node;
 
         return ERROR_NO;
     } else {
@@ -184,7 +180,7 @@ static ErrorCode get_arg(char** buf, char* str)
     return ERROR_NO;
 }
 
-static ErrorCode check_type_arg(char* str, TypeData* type_arg)
+static ErrorCode check_type_arg(char* str, TreeDataType* type_arg)
 {
     assert(str);
     ErrorCode err = ERROR_NO;
@@ -214,15 +210,15 @@ static ErrorCode check_type_arg(char* str, TypeData* type_arg)
     return ERROR_INPUT_VARIABLE;
 }
 
-static ErrorCode write_arg(Node* node, Variables* vars, char* str, TypeData type_arg)
+static ErrorCode write_arg(TreeNode* node, Variables* vars, char* str, TreeDataType type_arg)
 {
     ErrorCode err = ERROR_NO;
 
     node->type_value = type_arg;
     if (type_arg == TYPE_OP) {
         for (int i = 0; i < COUNT_OPs; i++) {
-            if (strcmp(OPs[i].name, str) == 0) {
-                node->value = OPs[i].type_op;
+            if (strcmp(OPERATORS[i].name, str) == 0) {
+                node->value = OPERATORS[i].type_op;
                 break;
             }
         }
@@ -258,7 +254,7 @@ static ErrorCode write_arg(Node* node, Variables* vars, char* str, TypeData type
 static ErrorCode is_operator(char* str, int* is_oper)
 {
     for (int i = 0; i < COUNT_OPs; i++) {
-        if (strcmp(OPs[i].name, str) == 0) {
+        if (strcmp(OPERATORS[i].name, str) == 0) {
             (*is_oper) = 1;
             break;
         }
@@ -281,7 +277,7 @@ static ErrorCode is_number(char* str, int* is_num)
             (*is_num) = 0;
             return ERROR_NO;
         }
-        if (count_dot >   1 || (count_dot ==   1 && i == 0) || count_minus > 0)
+        if (count_dot > 1 || (count_dot == 1 && i == 0) || count_minus > 0)
             return ERROR_READ_INPUT;
         i++;
     }

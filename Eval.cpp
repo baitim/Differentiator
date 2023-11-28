@@ -1,26 +1,18 @@
 #include <assert.h>
-#include <math.h>
 #include <string.h>
 
 #include "ANSI_colors.h"
 #include "Eval.h"
+#include "Math.h"
 #include "Input.h"
 
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
-
-const double EPSILON = 1e-9;
-
 static ErrorCode get_num_eval_var (Tree* tree, int* num_var);
-static ErrorCode tree_eval_ (Node* node, Variables* vars, double* ans_eval);
-static ErrorCode node_eval_ (Node* node, Variables* vars, double* ans_eval,
+static ErrorCode tree_eval_ (TreeNode* node, Variables* vars, double* eval_equation);
+static ErrorCode node_eval_ (TreeNode* node, Variables* vars, double* eval_equation,
                              double left_eval, double right_eval);
-static ErrorCode op_eval    (Node* node, double* ans_eval, double left_eval, double right_eval);
-static double norm_double   (double x, double min, double max);
-static double powf          (double x, int st);
-static int is_double_equal  (double x, double y);
+static ErrorCode op_eval    (TreeNode* node, double* eval_equation, double left_eval, double right_eval);
 
-ErrorCode tree_eval(Tree* tree, double* ans_eval)
+ErrorCode tree_eval(Tree* tree, double* eval_equation)
 {
     if (!tree) return ERROR_INVALID_TREE;
 
@@ -30,7 +22,7 @@ ErrorCode tree_eval(Tree* tree, double* ans_eval)
     err = tree_copy(tree, "TreeEval", &new_tree);
     if (err) return err;
 
-    err = tree_eval_(new_tree->root, new_tree->variables, ans_eval);
+    err = tree_eval_(new_tree->root, new_tree->variables, eval_equation);
     if (err) return err;
 
     err = tree_delete(new_tree);
@@ -39,7 +31,7 @@ ErrorCode tree_eval(Tree* tree, double* ans_eval)
     return ERROR_NO;
 }
 
-static ErrorCode tree_eval_(Node* node, Variables* vars, double* ans_eval)
+static ErrorCode tree_eval_(TreeNode* node, Variables* vars, double* eval_equation)
 {
     assert(vars);
     if (!node) return ERROR_INVALID_TREE;
@@ -54,66 +46,60 @@ static ErrorCode tree_eval_(Node* node, Variables* vars, double* ans_eval)
     if (node->right) err = tree_eval_(node->right, vars, &right_eval);
     if (err) return err;
 
-    err = node_eval_(node, vars, ans_eval, left_eval, right_eval);
+    err = node_eval_(node, vars, eval_equation, left_eval, right_eval);
     if (err) return err;
 
     return tree_verify(node);
 }
 
-static ErrorCode node_eval_(Node* node, Variables* vars, double* ans_eval,
+static ErrorCode node_eval_(TreeNode* node, Variables* vars, double* eval_equation,
                             double left_eval, double right_eval)
 {
     assert(node);
     assert(vars);
 
     if (node->type_value == TYPE_NUM) {
-        *ans_eval = node->value;
+        *eval_equation = node->value;
     } else if (node->type_value == TYPE_VAR) {
         get_var(vars, (int)node->value);
-        *ans_eval = vars->var[(int)node->value].value;
+        *eval_equation = vars->var[(int)node->value].value;
     } else if (node->type_value == TYPE_OP) {
-        op_eval(node, ans_eval, left_eval, right_eval);
+        op_eval(node, eval_equation, left_eval, right_eval);
     }
 
     return ERROR_NO;
 }
 
-static ErrorCode op_eval(Node* node, double* ans_eval, double left_eval, double right_eval)
+static ErrorCode op_eval(TreeNode* node, double* eval_equation, double left_eval, double right_eval)
 {
     assert(node);
 
     switch ((int)node->value) {
-        case (OP_ADD) : *ans_eval = left_eval + right_eval;             break;
-        case (OP_SUB) : *ans_eval = left_eval - right_eval;             break;
-        case (OP_MUL) : *ans_eval = left_eval * right_eval;             break;
-        case (OP_DIV) :
+        case (OP_ADD)  : *eval_equation = left_eval + right_eval;           break;
+        case (OP_SUB)  : *eval_equation = left_eval - right_eval;           break;
+        case (OP_MUL)  : *eval_equation = left_eval * right_eval;           break;
+        case (OP_DIV)  :
             if (is_double_equal(right_eval, 0.f))
-                return ERROR_DIVIDED_NULL;
-            *ans_eval = left_eval / right_eval;
+                return ERROR_DIVISION_ZERO;
+            *eval_equation = left_eval / right_eval;
             break;
-        case (OP_POW) :
-            if (is_double_equal(right_eval, int(right_eval)))
-                *ans_eval = powf(left_eval, (int)right_eval);
-            else
-                *ans_eval = pow(left_eval, right_eval);
-            break;
-        case (OP_LOG) :  *ans_eval = log(left_eval) / log(right_eval);  break;
-        case (OP_LN) :   *ans_eval = log(left_eval);                    break;
-        case (OP_SQRT) : *ans_eval = sqrt(left_eval);                   break;
-        case (OP_SIN) :  *ans_eval = sin(left_eval);                    break;
-        case (OP_COS) :  *ans_eval = cos(left_eval);                    break;
-        case (OP_TG) :   *ans_eval = tan(left_eval);                    break;
-        case (OP_CTG) :  *ans_eval = 1 / tan(left_eval);                break;
-        case (OP_ASIN) : *ans_eval = asin(left_eval);                   break;
-        case (OP_ACOS) : *ans_eval = acos(left_eval);                   break;
-        case (OP_ATG) :  *ans_eval = atan(left_eval);                   break;
-        case (OP_ACTG) : *ans_eval = atan(1 / left_eval);               break;
-        case (OP_SH) :   *ans_eval = sinh(left_eval);                   break;
-        case (OP_CH) :   *ans_eval = cosh(left_eval);                   break;
-        case (OP_TH) :   *ans_eval = tanh(left_eval);                   break;
-        case (OP_CTH) :  *ans_eval = 1 / tanh(left_eval);               break;
-        default :
-            assert(0);
+        case (OP_POW)  : *eval_equation = my_pow(left_eval, right_eval);    break;
+        case (OP_LOG)  : *eval_equation = log(left_eval) / log(right_eval); break;
+        case (OP_LN)   : *eval_equation = log(left_eval);                   break;
+        case (OP_SQRT) : *eval_equation = sqrt(left_eval);                  break;
+        case (OP_SIN)  : *eval_equation = sin(left_eval);                   break;
+        case (OP_COS)  : *eval_equation = cos(left_eval);                   break;
+        case (OP_TG)   : *eval_equation = tan(left_eval);                   break;
+        case (OP_CTG)  : *eval_equation = 1 / tan(left_eval);               break;
+        case (OP_ASIN) : *eval_equation = asin(left_eval);                  break;
+        case (OP_ACOS) : *eval_equation = acos(left_eval);                  break;
+        case (OP_ATG)  : *eval_equation = atan(left_eval);                  break;
+        case (OP_ACTG) : *eval_equation = atan(1 / left_eval);              break;
+        case (OP_SH)   : *eval_equation = sinh(left_eval);                  break;
+        case (OP_CH)   : *eval_equation = cosh(left_eval);                  break;
+        case (OP_TH)   : *eval_equation = tanh(left_eval);                  break;
+        case (OP_CTH)  : *eval_equation = 1 / tanh(left_eval);              break;
+        default : assert(0);
     }
 
     return ERROR_NO;
@@ -130,23 +116,23 @@ ErrorCode tree_get_points(Tree* tree, EvalPoints* graph, double* x, double* y)
     err = tree_copy(tree, "TreeGetPoints", &new_tree);
     if (err) return err;
 
-    int max_ind = (int)((graph->right_board - graph->left_board) / graph->step_values) + 1;
+    int max_ind = (int)((graph->right_border - graph->left_border) / graph->step_values) + 1;
 
     int num_var = 0;
     err = get_num_eval_var(new_tree, &num_var);
     if (err) return err;
 
     for (int i = 0; i < max_ind; i++) {
-        double x_value = i * graph->step_values + graph->left_board;
+        double x_value = i * graph->step_values + graph->left_border;
         new_tree->variables->var[num_var].value = x_value;
         x[i] = x_value;
         double y_value = 0;
         err = tree_eval(new_tree, &y_value);
         if (err) return err;
-        double new_y = norm_double(y_value, graph->min_value, graph->max_value);
-        if (!is_double_equal(y_value, new_y)) {
-            y[i] = graph->max_value * 2; printf("%lf\n", x_value);
-        } else 
+        double new_y = clamp_double(y_value, graph->min_value, graph->max_value);
+        if (!is_double_equal(y_value, new_y))
+            y[i] = graph->max_value * 2;
+        else 
             y[i] = new_y;
     }
 
@@ -172,9 +158,14 @@ static ErrorCode get_num_eval_var(Tree* tree, int* num_var)
     }
 
     char name_var[MAX_SIZE_VAR] = "";
-    while (true) {
+    while (1) {
         printf(print_lcyan("Input name of variable: "));
         int count_read = scanf("%s", name_var);
+
+        if (count_read != 1) {
+            clean_stdin();
+            printf(print_lred("Wrong argument, you should input name of existing variable\n"));
+        }
 
         int exist = 0;
         for (int i = 0; i < tree->variables->count; i++) {
@@ -205,22 +196,4 @@ static ErrorCode get_num_eval_var(Tree* tree, int* num_var)
     }
 
     return tree_verify(tree->root);
-}
-
-static double norm_double(double x, double min, double max)
-{
-    return MIN(MAX(x, min), max);
-}
-
-static double powf(double x, int st)
-{
-    if (st == 0) return 1;
-    if (st % 2 == 1) return x * powf(x, st - 1);
-    double z = powf(x, st / 2);
-    return z * z;
-}
-
-static int is_double_equal(double x, double y)
-{
-    return (fabs(x - y) <= EPSILON);
 }
