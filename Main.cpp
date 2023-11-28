@@ -8,14 +8,15 @@
 #include "Evaluation.h"
 #include "Differentiation.h"
 #include "Simplification.h"
+#include "ProcessCmd.h"
 
-int main()
+int main(int argc, const char *argv[])
 {
     printf(print_lblue("# Implementation of Differentiator.\n"
                        "# (c) BAIDUSENOV TIMUR, 2023\n\n"));
 
     ErrorCode err = ERROR_NO;
-    const char name_data_file[] = "equation2.txt";
+    CmdInputData cmd_data = {};
     char* file_buffer = nullptr;
     char* start_file_buffer = nullptr;
     double eval_equation = -1;
@@ -25,10 +26,23 @@ int main()
     int num_dump_var = 0;
     int num_diff_var = 0;
 
+    err = input_cmd(argc, argv, &cmd_data);
+    if (err) goto error;
+
+    if (cmd_data.is_help) {
+        err = print_help();
+        if (err) goto error;
+    }
+
+    if (!cmd_data.is_data_file) {
+        err = ERROR_INVALID_FILE;
+        goto error;
+    }
+
     err = tree_new(&tree, "MainTree");
     if (err) goto error;
 
-    err = file_to_buf(name_data_file, &file_buffer);
+    err = file_to_buf(cmd_data.name_data_file, &file_buffer);
     if (err) goto error;
 
     start_file_buffer = file_buffer;
@@ -70,10 +84,10 @@ int main()
     err = tree_big_dump(tree_for_diff, num_dump_var);
     if (err) goto error;
 
-    // err = tree_simplify(tree_for_diff);
-    // if (err) return err;
-    // err = tree_big_dump(tree_for_diff, num_dump_var);
-    // if (err) goto error;
+    err = tree_simplify(tree_for_diff);
+    if (err) return err;
+    err = tree_big_dump(tree_for_diff, num_dump_var);
+    if (err) goto error;
 
     printf(print_lblue("\nBye\n"));
 
@@ -86,6 +100,7 @@ finally:
     free(start_file_buffer);
     tree_delete(tree);
     tree_delete(tree_for_diff);
+    cmd_data_delete(&cmd_data);
 
     return err;
 }

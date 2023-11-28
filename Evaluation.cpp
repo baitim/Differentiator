@@ -109,7 +109,7 @@ ErrorCode tree_get_points(Tree* tree, int num_var, EvalPoints* graph, double* x,
 
 ErrorCode err_eval(double* eval_equation, double left_eval, double right_eval)
 {
-    
+
     printf("Called err_eval with eval = %lf, left_eval = %lf, right_eval = %lf\n",
             *eval_equation, left_eval, right_eval);
     assert(0);
@@ -153,85 +153,85 @@ ErrorCode log_eval(double* eval_equation, double left_eval, double right_eval)
     return ERROR_NO;
 }
 
-ErrorCode ln_eval(double* eval_equation, double left_eval, double right_eval)
+ErrorCode ln_eval(double* eval_equation, double left_eval, double /*right_eval*/)
 {
     *eval_equation = log(left_eval);
     return ERROR_NO;
 }
 
-ErrorCode sqrt_eval(double* eval_equation, double left_eval, double right_eval)
+ErrorCode sqrt_eval(double* eval_equation, double left_eval, double /*right_eval*/)
 {
     *eval_equation = sqrt(left_eval);
     return ERROR_NO;
 }
 
-ErrorCode sin_eval(double* eval_equation, double left_eval, double right_eval)
+ErrorCode sin_eval(double* eval_equation, double left_eval, double /*right_eval*/)
 {
     *eval_equation = sin(left_eval);
     return ERROR_NO;
 }
 
-ErrorCode cos_eval(double* eval_equation, double left_eval, double right_eval)
+ErrorCode cos_eval(double* eval_equation, double left_eval, double /*right_eval*/)
 {
     *eval_equation = cos(left_eval);
     return ERROR_NO;
 }
 
-ErrorCode tg_eval(double* eval_equation, double left_eval, double right_eval)
+ErrorCode tg_eval(double* eval_equation, double left_eval, double /*right_eval*/)
 {
     *eval_equation = tan(left_eval);
     return ERROR_NO;
 }
 
-ErrorCode ctg_eval(double* eval_equation, double left_eval, double right_eval)
+ErrorCode ctg_eval(double* eval_equation, double left_eval, double /*right_eval*/)
 {
     *eval_equation = 1 / tan(left_eval);
     return ERROR_NO;
 }
 
-ErrorCode asin_eval(double* eval_equation, double left_eval, double right_eval)
+ErrorCode asin_eval(double* eval_equation, double left_eval, double /*right_eval*/)
 {
     *eval_equation = asin(left_eval);
     return ERROR_NO;
 }
 
-ErrorCode acos_eval(double* eval_equation, double left_eval, double right_eval)
+ErrorCode acos_eval(double* eval_equation, double left_eval, double /*right_eval*/)
 {
     *eval_equation = acos(left_eval);
     return ERROR_NO;
 }
 
-ErrorCode atg_eval(double* eval_equation, double left_eval, double right_eval)
+ErrorCode atg_eval(double* eval_equation, double left_eval, double /*right_eval*/)
 {
     *eval_equation = atan(left_eval);
     return ERROR_NO;
 }
 
-ErrorCode actg_eval(double* eval_equation, double left_eval, double right_eval)
+ErrorCode actg_eval(double* eval_equation, double left_eval, double /*right_eval*/)
 {
     *eval_equation = atan(1 / left_eval);
     return ERROR_NO;
 }
 
-ErrorCode sh_eval(double* eval_equation, double left_eval, double right_eval)
+ErrorCode sh_eval(double* eval_equation, double left_eval, double /*right_eval*/)
 {
     *eval_equation = sinh(left_eval);
     return ERROR_NO;
 }
 
-ErrorCode ch_eval(double* eval_equation, double left_eval, double right_eval)
+ErrorCode ch_eval(double* eval_equation, double left_eval, double /*right_eval*/)
 {
     *eval_equation = cosh(left_eval);
     return ERROR_NO;
 }
 
-ErrorCode th_eval(double* eval_equation, double left_eval, double right_eval)
+ErrorCode th_eval(double* eval_equation, double left_eval, double /*right_eval*/)
 {
     *eval_equation = tanh(left_eval);
     return ERROR_NO;
 }
 
-ErrorCode cth_eval(double* eval_equation, double left_eval, double right_eval)
+ErrorCode cth_eval(double* eval_equation, double left_eval, double /*right_eval*/)
 {
     *eval_equation = 1 / tanh(left_eval);
     return ERROR_NO;

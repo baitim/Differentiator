@@ -1,8 +1,6 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include "Operators.h"
-#include "Variables.h"
 #include "Errors.h"
 
 static const int POISON_VALUE = -0xbe;
@@ -22,6 +20,9 @@ struct TreeNode {
     TreeNode* right;
     TreeNode* parent;
 };
+
+#include "Operators.h"
+#include "Variables.h"
 
 ErrorCode node_init     (TreeNode** node);
 ErrorCode node_delete   (TreeNode* node);

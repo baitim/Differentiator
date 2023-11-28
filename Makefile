@@ -4,6 +4,7 @@ DEBUG = valgrind --leak-check=full
 
 TREE_FILES = 	$(wildcard *.cpp)
 INCLUDE_FILES = $(wildcard *.h)
+DATA_FILE = 	--name_data_file equation2.txt
 
 build : tree run
 
@@ -11,4 +12,4 @@ tree : $(TREE_FILES) $(INCLUDE_FILES)
 	g++ $(TREE_FILES) -o tree $(OPTIONS)
 
 run :
-	$(DEBUG) ./tree
+	$(DEBUG) ./tree $(DATA_FILE)

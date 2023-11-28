@@ -36,7 +36,7 @@ ErrorCode tree_new(Tree** tree, const char* tree_name)
     if (!(*tree)->output_info) return ERROR_ALLOC_FAIL;
 
     (*tree)->output_info->number_graph_dump = 1;
-    (*tree)->output_info->number_png_dump =   1;
+    (*tree)->output_info->number_svg_dump =   1;
     (*tree)->output_info->number_tex_dump =   1;
     (*tree)->output_info->number_html_dump =  1;
 
@@ -57,7 +57,7 @@ ErrorCode tree_delete(Tree* tree)
     tree->variables->count =                POISON_VALUE;
     tree->variables->capacity =             POISON_VALUE;
     tree->output_info->number_graph_dump =  POISON_VALUE;
-    tree->output_info->number_png_dump =    POISON_VALUE;
+    tree->output_info->number_svg_dump =    POISON_VALUE;
     tree->output_info->number_tex_dump =    POISON_VALUE;
     tree->output_info->number_html_dump =   POISON_VALUE;
     free(tree->variables->var);

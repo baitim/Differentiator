@@ -220,7 +220,7 @@ ErrorCode div_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode pow_diff(TreeNode* node, int num_var)
+ErrorCode pow_diff(TreeNode* node, int /*num_var*/)
 {
     assert(node);
 
@@ -229,7 +229,7 @@ ErrorCode pow_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode log_diff(TreeNode* node, int num_var)
+ErrorCode log_diff(TreeNode* node, int /*num_var*/)
 {
     assert(node);
 
@@ -238,7 +238,7 @@ ErrorCode log_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode ln_diff(TreeNode* node, int num_var)
+ErrorCode ln_diff(TreeNode* node, int /*num_var*/)
 {
     assert(node);
 
@@ -247,7 +247,7 @@ ErrorCode ln_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode sqrt_diff(TreeNode* node, int num_var)
+ErrorCode sqrt_diff(TreeNode* node, int /*num_var*/)
 {
     assert(node);
 
@@ -256,7 +256,7 @@ ErrorCode sqrt_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode sin_diff(TreeNode* node, int num_var)
+ErrorCode sin_diff(TreeNode* node, int /*num_var*/)
 {
     assert(node);
 
@@ -265,7 +265,7 @@ ErrorCode sin_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode cos_diff(TreeNode* node, int num_var)
+ErrorCode cos_diff(TreeNode* node, int /*num_var*/)
 {
     assert(node);
 
@@ -274,7 +274,7 @@ ErrorCode cos_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode tg_diff(TreeNode* node, int num_var)
+ErrorCode tg_diff(TreeNode* node, int /*num_var*/)
 {
     assert(node);
 
@@ -283,7 +283,7 @@ ErrorCode tg_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode ctg_diff(TreeNode* node, int num_var)
+ErrorCode ctg_diff(TreeNode* node, int /*num_var*/)
 {
     assert(node);
 
@@ -292,7 +292,7 @@ ErrorCode ctg_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode asin_diff(TreeNode* node, int num_var)
+ErrorCode asin_diff(TreeNode* node, int /*num_var*/)
 {
     assert(node);
 
@@ -301,7 +301,7 @@ ErrorCode asin_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode acos_diff(TreeNode* node, int num_var)
+ErrorCode acos_diff(TreeNode* node, int /*num_var*/)
 {
     assert(node);
 
@@ -310,7 +310,7 @@ ErrorCode acos_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode atg_diff(TreeNode* node, int num_var)
+ErrorCode atg_diff(TreeNode* node, int /*num_var*/)
 {
     assert(node);
 
@@ -319,7 +319,7 @@ ErrorCode atg_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode actg_diff(TreeNode* node, int num_var)
+ErrorCode actg_diff(TreeNode* node, int /*num_var*/)
 {
     assert(node);
 
@@ -328,7 +328,7 @@ ErrorCode actg_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode sh_diff(TreeNode* node, int num_var)
+ErrorCode sh_diff(TreeNode* node, int /*num_var*/)
 {
     assert(node);
 
@@ -337,7 +337,7 @@ ErrorCode sh_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode ch_diff(TreeNode* node, int num_var)
+ErrorCode ch_diff(TreeNode* node, int /*num_var*/)
 {
     assert(node);
 
@@ -346,7 +346,7 @@ ErrorCode ch_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode th_diff(TreeNode* node, int num_var)
+ErrorCode th_diff(TreeNode* node, int /*num_var*/)
 {
     assert(node);
 
@@ -355,7 +355,7 @@ ErrorCode th_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode cth_diff(TreeNode* node, int num_var)
+ErrorCode cth_diff(TreeNode* node, int /*num_var*/)
 {
     assert(node);
 

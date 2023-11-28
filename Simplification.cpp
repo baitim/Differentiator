@@ -2,8 +2,6 @@
 
 #include "Simplification.h"
 
-#include "Node.h"
-
 static ErrorCode tree_simplify_(TreeNode* node);
 static ErrorCode node_simplify_(TreeNode* node);
 
