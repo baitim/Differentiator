@@ -8,7 +8,7 @@
 #include "Output.h"
 #include "Node.h"
 #include "Math.h"
-#include "Eval.h"
+#include "Evaluation.h"
 
 enum Branch {
     BRANCH_ERR =   0,
@@ -538,7 +538,7 @@ static ErrorCode write_left_parenthesis(TreeNode* node, FILE* dump_file, Branch 
             par_op == OP_COS  || par_op == OP_TG   || par_op == OP_CTG ||
             par_op == OP_ASIN || par_op == OP_ACOS || par_op == OP_ATG ||
             par_op == OP_ACTG || par_op == OP_SH   || par_op == OP_CH  ||
-            par_op == OP_TH || par_op == OP_CTH)
+            par_op == OP_TH   || par_op == OP_CTH  || par_op == OP_SUB)
             && OPERATORS[(int)node->value].ops_num > 1 && node->depth > 1)
             fprintf(dump_file, "(");
     }
@@ -558,7 +558,7 @@ static ErrorCode write_right_parenthesis(TreeNode* node, FILE* dump_file,
             par_op == OP_COS  || par_op == OP_TG   || par_op == OP_CTG ||
             par_op == OP_ASIN || par_op == OP_ACOS || par_op == OP_ATG ||
             par_op == OP_ACTG || par_op == OP_SH   || par_op == OP_CH  ||
-            par_op == OP_TH || par_op == OP_CTH)
+            par_op == OP_TH   || par_op == OP_CTH  || par_op == OP_SUB)
              && OPERATORS[(int)node->value].ops_num > 1 && node->depth > 1)
             fprintf(dump_file, ")");
 
@@ -567,7 +567,7 @@ static ErrorCode write_right_parenthesis(TreeNode* node, FILE* dump_file,
             par_op == OP_COS  || par_op == OP_TG   || par_op == OP_CTG ||
             par_op == OP_ASIN || par_op == OP_ACOS || par_op == OP_ATG ||
             par_op == OP_ACTG || par_op == OP_SH   || par_op == OP_CH  ||
-            par_op == OP_TH || par_op == OP_CTH)
+            par_op == OP_TH   || par_op == OP_CTH)
             fprintf(dump_file, "}");
     }
 

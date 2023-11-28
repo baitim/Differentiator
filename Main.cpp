@@ -5,8 +5,9 @@
 #include "Tree.h"
 #include "Output.h"
 #include "Input.h"
-#include "Eval.h"
-#include "Diff.h"
+#include "Evaluation.h"
+#include "Differentiation.h"
+#include "Simplification.h"
 
 int main()
 {
@@ -68,6 +69,11 @@ int main()
     if (err) goto error;
     err = tree_big_dump(tree_for_diff, num_dump_var);
     if (err) goto error;
+
+    // err = tree_simplify(tree_for_diff);
+    // if (err) return err;
+    // err = tree_big_dump(tree_for_diff, num_dump_var);
+    // if (err) goto error;
 
     printf(print_lblue("\nBye\n"));
 

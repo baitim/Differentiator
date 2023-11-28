@@ -4,8 +4,7 @@
 
 #include "Tree.h"
 #include "Output.h"
-
-#define MAX(a, b) ((a) > (b)) ? (a) : (b)
+#include "Math.h"
 
 enum TypeNodeColor {
     NODE_COLOR_WHITE = 0,
