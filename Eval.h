@@ -12,7 +12,7 @@ struct EvalPoints {
     const double step_values;
 };
 
-ErrorCode tree_eval(Tree* tree, double* ans_eval);
-ErrorCode tree_get_points(Tree* tree, EvalPoints* graph, double* x, double* y);
+ErrorCode tree_eval         (Tree* tree, double* ans_eval);
+ErrorCode tree_get_points   (Tree* tree, int num_var, EvalPoints* graph, double* x, double* y);
 
 #endif // EVAL_H

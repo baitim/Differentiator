@@ -23,6 +23,66 @@ static char* skip_spaces        (char* ass);
 static char* skip_word          (char* sus);
 static ErrorCode vars_increase_cap(Variables* vars);
 
+ErrorCode tree_get_val_vars(Tree* tree)
+{
+    if (!tree) return ERROR_INVALID_TREE;
+
+    ErrorCode err = tree_verify(tree->root);
+    if (err) return err;
+
+    for (int i = 0; i < tree->variables->count; i++) {
+        if (!tree->variables->var[i].valid) {
+            printf(print_lcyan("You should input variables:\n"));
+            break;
+        }
+    }
+                
+    for (int i = 0; i < tree->variables->count; i++)
+        get_var(tree->variables, i);
+
+    printf(print_lcyan("All variables have value\n"));
+
+    return tree_verify(tree->root);
+}
+
+ErrorCode tree_get_num_var(Tree* tree, int* num_var)
+{
+    if (!tree) return ERROR_INVALID_TREE;
+
+    ErrorCode err = tree_verify(tree->root);
+    if (err) return err;
+
+    printf(print_lcyan("You can choose this variables:\n"));
+    for (int i = 0; i < tree->variables->count; i++)
+        printf(print_lcyan("\t· %s\n"), tree->variables->var[i].name);
+
+    char name_var[MAX_SIZE_VAR] = "";
+    while (1) {
+        printf(print_lcyan("Input name of variable: "));
+        int count_read = scanf("%s", name_var);
+
+        if (count_read != 1) {
+            clean_stdin();
+            printf(print_lred("Wrong argument, you should input name of existing variable\n"));
+        }
+
+        int exist = 0;
+        for (int i = 0; i < tree->variables->count; i++) {
+            if (strcmp(tree->variables->var[i].name, name_var) == 0) {
+                *num_var = i;
+                exist = 1;
+            }
+        }
+
+        if (exist == 1 && count_read == 1) break;
+
+        clean_stdin();
+        printf(print_lred("Wrong argument, you should input name of existing variable\n"));
+    }
+
+    return tree_verify(tree->root);
+}
+
 ErrorCode tree_read(Tree* tree, char** buf)
 {
     assert(buf);

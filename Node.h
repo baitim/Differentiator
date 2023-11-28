@@ -5,7 +5,7 @@
 #include "Variables.h"
 #include "Errors.h"
 
-static const int POISON_INT = -1;
+static const int POISON_VALUE = -0xbe;
 
 enum TreeDataType {
     TYPE_ERR = -1,
@@ -28,6 +28,7 @@ ErrorCode node_delete   (TreeNode* node);
 ErrorCode node_copy     (TreeNode* node, TreeNode** new_node);
 ErrorCode node_insert_op(TreeNode* dest, TypeOperator operator_, 
                          TreeNode* left, TreeNode* right);
+ErrorCode node_get_depth(TreeNode* node, int* depth);
 
 #include "Tree.h"
 

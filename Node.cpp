@@ -4,8 +4,6 @@
 #include "Node.h"
 #include "Math.h"
 
-static const int POISON_VALUE = -0xbe;
-
 ErrorCode node_init(TreeNode** node)
 {
     assert(node);
@@ -35,7 +33,7 @@ ErrorCode node_delete(TreeNode* node)
     if (node->right) err = node_delete(node->right);
     if (err) return err;
     
-    node->depth = POISON_INT;
+    node->depth = POISON_VALUE;
 
     free(node);
     return ERROR_NO;
@@ -68,11 +66,11 @@ ErrorCode node_copy(TreeNode* node, TreeNode** new_node)
 
 ErrorCode node_insert_op(TreeNode* dest, TypeOperator operator_, 
                          TreeNode* left, TreeNode* right)
-{
-    assert(left);
-    assert(right);
-    
+{   
     ErrorCode err = ERROR_NO;
+
+    if (!dest) err = node_init(&dest);
+    if (err) return err;
 
     if (dest->left) err =  node_delete(dest->left);
     if (err) return err;
@@ -82,20 +80,34 @@ ErrorCode node_insert_op(TreeNode* dest, TypeOperator operator_,
     dest->type_value =  TYPE_OP;
     dest->value =       operator_;
 
-    if (left) err = node_copy(left, &dest->left);
+    if (left)   err = node_copy(left, &dest->left);
+    else        dest->left = nullptr;
     if (err) return err;
 
-    if (right) err = node_copy(right, &dest->right);
+    if (right)  err = node_copy(right, &dest->right);
+    else        dest->right = nullptr;
     if (err) return err;
 
-    int left_depth =  0;
-    int right_depth = 0;
-    if (dest->left)  left_depth =  dest->left->depth;
-    if (dest->right) right_depth = dest->right->depth;
-    dest->depth = MAX(left_depth, right_depth) + 1;
+    int depth = 0;
+    err = node_get_depth(dest, &depth);
+    if (err) return err;
+    dest->depth = depth;
 
     if (dest->left)  dest->left->parent =  dest;
     if (dest->right) dest->right->parent = dest;
+
+    return ERROR_NO;
+}
+
+ErrorCode node_get_depth(TreeNode* node, int* depth)
+{
+    assert(node);
+
+    int left_depth =  0;
+    int right_depth = 0;
+    if (node->left)  left_depth =  node->left->depth;
+    if (node->right) right_depth = node->right->depth;
+    (*depth) = MAX(left_depth, right_depth) + 1;
 
     return ERROR_NO;
 }

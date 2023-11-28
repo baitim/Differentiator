@@ -12,8 +12,8 @@ struct OutputInfo {
 };
 
 ErrorCode prepare_dump_dir  (Tree* tree);
-ErrorCode tree_big_dump     (Tree* tree);
-ErrorCode tree_graph_dump   (Tree* tree);
+ErrorCode tree_big_dump     (Tree* tree, int num_var);
+ErrorCode tree_graph_dump   (Tree* tree, int num_var);
 ErrorCode tree_cmd_dump     (Tree* tree);
 ErrorCode tree_png_dump     (Tree* tree);
 ErrorCode tree_html_dump    (Tree* tree);

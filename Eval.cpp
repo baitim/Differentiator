@@ -6,7 +6,6 @@
 #include "Math.h"
 #include "Input.h"
 
-static ErrorCode get_num_eval_var (Tree* tree, int* num_var);
 static ErrorCode tree_eval_ (TreeNode* node, Variables* vars, double* eval_equation);
 static ErrorCode node_eval_ (TreeNode* node, Variables* vars, double* eval_equation,
                              double left_eval, double right_eval);
@@ -18,14 +17,7 @@ ErrorCode tree_eval(Tree* tree, double* eval_equation)
 
     ErrorCode err = ERROR_NO;
 
-    Tree* new_tree = nullptr;
-    err = tree_copy(tree, "TreeEval", &new_tree);
-    if (err) return err;
-
-    err = tree_eval_(new_tree->root, new_tree->variables, eval_equation);
-    if (err) return err;
-
-    err = tree_delete(new_tree);
+    err = tree_eval_(tree->root, tree->variables, eval_equation);
     if (err) return err;
 
     return ERROR_NO;
@@ -61,7 +53,6 @@ static ErrorCode node_eval_(TreeNode* node, Variables* vars, double* eval_equati
     if (node->type_value == TYPE_NUM) {
         *eval_equation = node->value;
     } else if (node->type_value == TYPE_VAR) {
-        get_var(vars, (int)node->value);
         *eval_equation = vars->var[(int)node->value].value;
     } else if (node->type_value == TYPE_OP) {
         op_eval(node, eval_equation, left_eval, right_eval);
@@ -105,7 +96,7 @@ static ErrorCode op_eval(TreeNode* node, double* eval_equation, double left_eval
     return ERROR_NO;
 }
 
-ErrorCode tree_get_points(Tree* tree, EvalPoints* graph, double* x, double* y)
+ErrorCode tree_get_points(Tree* tree, int num_var, EvalPoints* graph, double* x, double* y)
 {
     if (!tree) return ERROR_INVALID_TREE;
 
@@ -118,10 +109,8 @@ ErrorCode tree_get_points(Tree* tree, EvalPoints* graph, double* x, double* y)
 
     int max_ind = (int)((graph->right_border - graph->left_border) / graph->step_values) + 1;
 
-    int num_var = 0;
-    err = get_num_eval_var(new_tree, &num_var);
-    if (err) return err;
-
+    double old_value_var = 0;
+    if (tree->variables->var[num_var].valid) old_value_var = tree->variables->var[num_var].value;
     for (int i = 0; i < max_ind; i++) {
         double x_value = i * graph->step_values + graph->left_border;
         new_tree->variables->var[num_var].value = x_value;
@@ -135,65 +124,10 @@ ErrorCode tree_get_points(Tree* tree, EvalPoints* graph, double* x, double* y)
         else 
             y[i] = new_y;
     }
+    if (tree->variables->var[num_var].valid) tree->variables->var[num_var].value = old_value_var;
 
     err = tree_delete(new_tree);
     if (err) return err;
-
-    return tree_verify(tree->root);
-}
-
-static ErrorCode get_num_eval_var(Tree* tree, int* num_var)
-{
-    if (!tree) return ERROR_INVALID_TREE;
-
-    ErrorCode err = tree_verify(tree->root);
-    if (err) return err;
-
-    printf(print_lcyan("You can choose this variables:\n"));
-    for (int i = 0; i < tree->variables->count; i++) {
-        if (!tree->variables->var[i].valid) {
-            printf(print_lcyan("\t· %s\n"), tree->variables->var[i].name);
-            tree->variables->var[i].value = 0;
-        }
-    }
-
-    char name_var[MAX_SIZE_VAR] = "";
-    while (1) {
-        printf(print_lcyan("Input name of variable: "));
-        int count_read = scanf("%s", name_var);
-
-        if (count_read != 1) {
-            clean_stdin();
-            printf(print_lred("Wrong argument, you should input name of existing variable\n"));
-        }
-
-        int exist = 0;
-        for (int i = 0; i < tree->variables->count; i++) {
-            if (strcmp(tree->variables->var[i].name, name_var) == 0) {
-                *num_var = i;
-                tree->variables->var[i].valid = 1;
-                exist = 1;
-            }
-        }
-
-        if (exist == 1 && count_read == 1) {
-            for (int i = 0; i < tree->variables->count; i++) {
-                if (!tree->variables->var[i].valid) {
-                    printf(print_lcyan("Also you should input variables:\n"));
-                    break;
-                }
-            }
-                
-            for (int i = 0; i < tree->variables->count; i++)
-                get_var(tree->variables, i);
-
-            printf(print_lcyan("All variables have value\n"));
-            break;
-        } else {
-            clean_stdin();
-            printf(print_lred("Wrong argument, you should input name of existing variable\n"));
-        }
-    }
 
     return tree_verify(tree->root);
 }

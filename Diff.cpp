@@ -10,22 +10,17 @@ static ErrorCode tree_diff_         (TreeNode* node, int num_var);
 static ErrorCode node_diff          (TreeNode* node, int num_var);
 static ErrorCode var_diff           (TreeNode* node, int num_var);
 static ErrorCode op_diff            (TreeNode* node, int num_var);
-static ErrorCode get_num_diff_var   (Tree* tree, int* num_var);
 
 static ErrorCode add_diff           (TreeNode* node, int num_var);
 static ErrorCode sub_diff           (TreeNode* node, int num_var);
 static ErrorCode mul_diff           (TreeNode* node, int num_var);
 static ErrorCode div_diff           (TreeNode* node, int num_var);
 
-ErrorCode tree_diff(Tree* tree)
+ErrorCode tree_diff(Tree* tree, int num_var)
 {
     if (!tree) return ERROR_INVALID_TREE;
 
     ErrorCode err = ERROR_NO;
-
-    int num_var = 0;
-    err = get_num_diff_var(tree, &num_var);
-    if (err) return err;
 
     err = tree_diff_(tree->root, num_var);
     if (err) return err;
@@ -162,7 +157,7 @@ static ErrorCode mul_diff(TreeNode* node, int num_var)
     if (err) return err;
     
     for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth,  np->right->depth) + 1;
+        np->depth = MAX(np->left->depth, np->right->depth) + 1;
 
     err = node_delete(node_left_copy);
     if (err) return err;
@@ -182,49 +177,49 @@ static ErrorCode div_diff(TreeNode* node, int num_var)
 
     ErrorCode err = ERROR_NO;
 
+    TreeNode* node_right_copy = nullptr;
+    err = node_copy(node->right, &node_right_copy);
+    if (err) return err;
+
+    TreeNode* node_value_two = nullptr;
+    err = node_init(&node_value_two);
+    if (err) return err;
+    node_value_two->depth = 1;
+    node_value_two->type_value = TYPE_NUM;
+    node_value_two->value = 2;
+
+    TreeNode* numerator = nullptr;
+    err = node_copy(node, &numerator);
+    if (err) return err;
+    numerator->value = OP_MUL;
+    err = node_diff(numerator, num_var);
+    if (err) return err;
+    numerator->value = OP_SUB;
+
+    TreeNode* denominator = nullptr;
+    err = node_init(&denominator);
+    if (err) return err;
+    err = node_insert_op(denominator, OP_POW, node_right_copy, node_value_two);
+    if (err) return err;
+
+    err = node_insert_op(node, OP_DIV, numerator, denominator);
+    if (err) return err;
     
-    if (err) return err;
-}
-
-static ErrorCode get_num_diff_var(Tree* tree, int* num_var)
-{
-    if (!tree) return ERROR_INVALID_TREE;
-
-    ErrorCode err = tree_verify(tree->root);
-    if (err) return err;
-
-    printf(print_lcyan("You can choose this variables:\n"));
-    for (int i = 0; i < tree->variables->count; i++) {
-        if (!tree->variables->var[i].valid) {
-            printf(print_lcyan("\t· %s\n"), tree->variables->var[i].name);
-            tree->variables->var[i].value = 0;
-        }
+    for (TreeNode* np = node; np; np = np->parent) {
+        int depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
     }
 
-    char name_var[MAX_SIZE_VAR] = "";
-    while (1) {
-        printf(print_lcyan("Input name of variable: "));
-        int count_read = scanf("%s", name_var);
-
-        if (count_read != 1) {
-            clean_stdin();
-            printf(print_lred("Wrong argument, you should input name of existing variable\n"));
-        }
-
-        int exist = 0;
-        for (int i = 0; i < tree->variables->count; i++) {
-            if (strcmp(tree->variables->var[i].name, name_var) == 0) {
-                *num_var = i;
-                tree->variables->var[i].valid = 1;
-                exist = 1;
-            }
-        }
-
-        if (exist) break;
-
-        clean_stdin();
-        printf(print_lred("Wrong argument, you should input name of existing variable\n"));
-    }
-
-    return tree_verify(tree->root);
+    err = node_delete(node_right_copy);
+    if (err) return err;
+    err = node_delete(node_value_two);
+    if (err) return err;
+    err = node_delete(numerator);
+    if (err) return err;
+    err = node_delete(denominator);
+    if (err) return err;
+    
+    return err;
 }

@@ -19,7 +19,7 @@ enum Branch {
 const int MAX_SIZE_NAME_DUMP = 100;
 const int MAX_SIZE_COMMAND = 500;
 
-static ErrorCode tree_write_points          (Tree* tree, EvalPoints* graph, FILE* dump_file);
+static ErrorCode tree_write_points          (Tree* tree, int num_var, EvalPoints* graph, FILE* dump_file);
 static ErrorCode tree_cmd_dump_             (TreeNode* node, Variables* vars, int dep);
 static ErrorCode tree_png_dump_make_node    (TreeNode* node, Variables* vars, FILE* dump_file);
 static ErrorCode tree_png_dump_make_edge    (TreeNode* node, FILE* dump_file);
@@ -57,7 +57,7 @@ ErrorCode prepare_dump_dir(Tree* tree)
     return ERROR_NO;
 }
 
-ErrorCode tree_big_dump(Tree* tree)
+ErrorCode tree_big_dump(Tree* tree, int num_var)
 {
     if (!tree) return ERROR_INVALID_TREE;
 
@@ -72,7 +72,7 @@ ErrorCode tree_big_dump(Tree* tree)
     err = tree_tex_dump(tree);
     if (err) return err;
 
-    err = tree_graph_dump(tree);
+    err = tree_graph_dump(tree, num_var);
     if (err) return err;
 
     err = tree_html_dump(tree);
@@ -81,7 +81,7 @@ ErrorCode tree_big_dump(Tree* tree)
     return ERROR_NO;
 }
 
-ErrorCode tree_graph_dump(Tree* tree)
+ErrorCode tree_graph_dump(Tree* tree, int num_var)
 {
     if (!tree) return ERROR_INVALID_TREE;
 
@@ -109,7 +109,7 @@ ErrorCode tree_graph_dump(Tree* tree)
 
     fprintf(dump_file,  "import matplotlib.pyplot as plt\n");
 
-    err = tree_write_points(tree, &graph, dump_file);
+    err = tree_write_points(tree, num_var, &graph, dump_file);
     if (err) return err;
 
     fprintf(dump_file, "plt.plot(x, y)\n");
@@ -135,7 +135,7 @@ ErrorCode tree_graph_dump(Tree* tree)
     return tree_verify(tree->root);
 }
 
-static ErrorCode tree_write_points(Tree* tree, EvalPoints* graph, FILE* dump_file)
+static ErrorCode tree_write_points(Tree* tree, int num_var, EvalPoints* graph, FILE* dump_file)
 {
     if (!tree) return ERROR_INVALID_TREE;
 
@@ -151,7 +151,7 @@ static ErrorCode tree_write_points(Tree* tree, EvalPoints* graph, FILE* dump_fil
     double* y = (double*)calloc(size, sizeof(double));
     if (!y) return ERROR_ALLOC_FAIL;
 
-    err = tree_get_points(tree, graph, x, y);
+    err = tree_get_points(tree, num_var, graph, x, y);
     if (err) return err;
 
     fprintf(dump_file, "x = [");

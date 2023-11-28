@@ -55,12 +55,12 @@ ErrorCode tree_delete(Tree* tree)
         free(tree->variables->var[i].name);
     }
     
-    tree->variables->count =                POISON_INT;
-    tree->variables->capacity =             POISON_INT;
-    tree->output_info->number_graph_dump =  POISON_INT;
-    tree->output_info->number_png_dump =    POISON_INT;
-    tree->output_info->number_tex_dump =    POISON_INT;
-    tree->output_info->number_html_dump =   POISON_INT;
+    tree->variables->count =                POISON_VALUE;
+    tree->variables->capacity =             POISON_VALUE;
+    tree->output_info->number_graph_dump =  POISON_VALUE;
+    tree->output_info->number_png_dump =    POISON_VALUE;
+    tree->output_info->number_tex_dump =    POISON_VALUE;
+    tree->output_info->number_html_dump =   POISON_VALUE;
     free(tree->variables->var);
     free(tree->variables);
     free(tree->output_info);
