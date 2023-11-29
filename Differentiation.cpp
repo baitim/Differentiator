@@ -147,9 +147,9 @@ ErrorCode mul_diff(TreeNode* node, int num_var)
 
     node->type_value =  TYPE_OP;
     node->value =       OP_ADD;
-    err = node_insert_op(node->left,  OP_MUL, node_left_diff,  node_right_copy);
+    err = node_insert_op(&node->left,  OP_MUL, node_left_diff,  node_right_copy);
     if (err) return err;
-    err = node_insert_op(node->right, OP_MUL, node_left_copy, node_right_diff);
+    err = node_insert_op(&node->right, OP_MUL, node_left_copy, node_right_diff);
     if (err) return err;
     
     for (TreeNode* np = node; np; np = np->parent)
@@ -190,12 +190,10 @@ ErrorCode div_diff(TreeNode* node, int num_var)
     numerator->value = OP_SUB;
 
     TreeNode* denominator = nullptr;
-    err = node_init(&denominator);
-    if (err) return err;
-    err = node_insert_op(denominator, OP_POW, node_right_copy, node_value_two);
+    err = node_insert_op(&denominator, OP_POW, node_right_copy, node_value_two);
     if (err) return err;
 
-    err = node_insert_op(node, OP_DIV, numerator, denominator);
+    err = node_insert_op(&node, OP_DIV, numerator, denominator);
     if (err) return err;
     
     for (TreeNode* np = node; np; np = np->parent) {
@@ -250,10 +248,7 @@ ErrorCode ln_diff(TreeNode* node, int num_var)
     if (err) return err;
 
     TreeNode* fraction = nullptr;
-    err = node_init(&fraction);
-    if (err) return err;
-
-    err = node_insert_op(fraction, OP_DIV, node_value_one, node_left_copy);
+    err = node_insert_op(&fraction, OP_DIV, node_value_one, node_left_copy);
     if (err) return err;
 
     TreeNode* node_left_diff =  nullptr;
@@ -262,7 +257,7 @@ ErrorCode ln_diff(TreeNode* node, int num_var)
     err = node_diff(node_left_diff, num_var);
     if (err) return err;
 
-    err = node_insert_op(node, OP_MUL, node_left_diff, fraction);
+    err = node_insert_op(&node, OP_MUL, node_left_diff, fraction);
     if (err) return err;
 
     for (TreeNode* np = node; np; np = np->parent)
@@ -301,12 +296,10 @@ ErrorCode sqrt_diff(TreeNode* node, int num_var)
     if (err) return err;
 
     TreeNode* denominator = nullptr;
-    err = node_init(&denominator);
-    if (err) return err;
-    err = node_insert_op(denominator, OP_MUL, node_value_two, node_copy_);
+    err = node_insert_op(&denominator, OP_MUL, node_value_two, node_copy_);
     if (err) return err;
 
-    err = node_insert_op(node, OP_DIV, numerator, denominator);
+    err = node_insert_op(&node, OP_DIV, numerator, denominator);
     if (err) return err;
     
     for (TreeNode* np = node; np; np = np->parent)
@@ -341,7 +334,7 @@ ErrorCode sin_diff(TreeNode* node, int num_var)
     err = node_diff(node_left_diff, num_var);
     if (err) return err;
 
-    err = node_insert_op(node, OP_MUL, node_left_diff, node_copy_);
+    err = node_insert_op(&node, OP_MUL, node_left_diff, node_copy_);
     if (err) return err;
 
     for (TreeNode* np = node; np; np = np->parent)
@@ -377,12 +370,10 @@ ErrorCode cos_diff(TreeNode* node, int num_var)
     if (err) return err;
 
     TreeNode* node_right = nullptr;
-    err = node_init(&node_right);
-    if (err) return err;
-    err = node_insert_op(node_right, OP_MUL, new_node_right_diff, new_node_right);
+    err = node_insert_op(&node_right, OP_MUL, new_node_right_diff, new_node_right);
     if (err) return err;
 
-    err = node_insert_op(node, OP_MUL, node_value_minus_one, node_right);
+    err = node_insert_op(&node, OP_MUL, node_value_minus_one, node_right);
     if (err) return err;
 
     for (TreeNode* np = node; np; np = np->parent)
@@ -422,12 +413,10 @@ ErrorCode tg_diff(TreeNode* node, int num_var)
     if (err) return err;
 
     TreeNode* denominator = nullptr;
-    err = node_init(&denominator);
-    if (err) return err;
-    err = node_insert_op(denominator, OP_POW, node_copy_, node_value_two);
+    err = node_insert_op(&denominator, OP_POW, node_copy_, node_value_two);
     if (err) return err;
 
-    err = node_insert_op(node, OP_DIV, numerator, denominator);
+    err = node_insert_op(&node, OP_DIV, numerator, denominator);
     if (err) return err;
     
     for (TreeNode* np = node; np; np = np->parent)
@@ -471,19 +460,17 @@ ErrorCode ctg_diff(TreeNode* node, int num_var)
     if (err) return err;
 
     TreeNode* denominator = nullptr;
-    err = node_init(&denominator);
-    if (err) return err;
-    err = node_insert_op(denominator, OP_POW, node_copy_, node_value_two);
+    err = node_insert_op(&denominator, OP_POW, node_copy_, node_value_two);
     if (err) return err;
 
-    err = node_insert_op(node, OP_DIV, numerator, denominator);
+    err = node_insert_op(&node, OP_DIV, numerator, denominator);
     if (err) return err;
     err = node_delete(node_copy_);
     if (err) return err;
     err = node_copy(node, &node_copy_);
     if (err) return err;
 
-    err = node_insert_op(node, OP_MUL, node_value_minus_one, node_copy_);
+    err = node_insert_op(&node, OP_MUL, node_value_minus_one, node_copy_);
     if (err) return err;
     
     for (TreeNode* np = node; np; np = np->parent)
@@ -503,21 +490,126 @@ ErrorCode ctg_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode asin_diff(TreeNode* node, int /*num_var*/)
+ErrorCode asin_diff(TreeNode* node, int num_var)
 {
     assert(node);
 
     ErrorCode err = ERROR_NO;
+
+    TreeNode* numerator = nullptr;
+    err = node_copy(node->left, &numerator);
+    if (err) return err;
+    err = node_diff(numerator, num_var);
+    if (err) return err;
+
+    TreeNode* node_value_one = nullptr;
+    err = node_init_num(&node_value_one, 1);
+    if (err) return err;
+
+    TreeNode* node_value_two = nullptr;
+    err = node_init_num(&node_value_two, 2);
+    if (err) return err;
+
+    TreeNode* node_pow_two = nullptr;
+    err = node_insert_op(&node_pow_two, OP_POW, node->left, node_value_two);
+    if (err) return err;
+
+    TreeNode* denominator = nullptr;
+    err = node_insert_op(&denominator, OP_SUB, node_value_one, node_pow_two);
+    if (err) return err;
+    TreeNode* denominator_copy = nullptr;
+    err = node_copy(denominator, &denominator_copy);
+    if (err) return err;
+    err = node_insert_op(&denominator, OP_SQRT, denominator_copy, nullptr);
+    if (err) return err;
+
+    err = node_insert_op(&node, OP_DIV, numerator, denominator);
+    if (err) return err;
     
+    for (TreeNode* np = node; np; np = np->parent)
+        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+
+    err = node_delete(numerator);
+    if (err) return err;
+    err = node_delete(node_value_one);
+    if (err) return err;
+    err = node_delete(node_value_two);
+    if (err) return err;
+    err = node_delete(node_pow_two);
+    if (err) return err;
+    err = node_delete(denominator);
+    if (err) return err;
+    err = node_delete(denominator_copy);
+    if (err) return err;
+
     return err;
 }
 
-ErrorCode acos_diff(TreeNode* node, int /*num_var*/)
+ErrorCode acos_diff(TreeNode* node, int num_var)
 {
     assert(node);
 
     ErrorCode err = ERROR_NO;
+
+    TreeNode* numerator = nullptr;
+    err = node_copy(node->left, &numerator);
+    if (err) return err;
+    err = node_diff(numerator, num_var);
+    if (err) return err;
+
+    TreeNode* node_value_one = nullptr;
+    err = node_init_num(&node_value_one, 1);
+    if (err) return err;
+
+    TreeNode* node_value_two = nullptr;
+    err = node_init_num(&node_value_two, 2);
+    if (err) return err;
+
+    TreeNode* node_pow_two = nullptr;
+    err = node_insert_op(&node_pow_two, OP_POW, node->left, node_value_two);
+    if (err) return err;
+
+    TreeNode* denominator = nullptr;
+    err = node_insert_op(&denominator, OP_SUB, node_value_one, node_pow_two);
+    if (err) return err;
+    TreeNode* denominator_copy = nullptr;
+    err = node_copy(denominator, &denominator_copy);
+    if (err) return err;
+    err = node_insert_op(&denominator, OP_SQRT, denominator_copy, nullptr);
+    if (err) return err;
+
+    err = node_insert_op(&node, OP_DIV, numerator, denominator);
+    if (err) return err;
+
+    TreeNode* node_value_minus_one = nullptr;
+    err = node_init_num(&node_value_minus_one, -1);
+    if (err) return err;
+    TreeNode* node_copy_ = nullptr;
+    err = node_copy(node, &node_copy_);
+    if (err) return err;
+    err = node_insert_op(&node, OP_MUL, node_value_minus_one, node_copy_);
+    if (err) return err;
     
+    for (TreeNode* np = node; np; np = np->parent)
+        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+
+    err = node_delete(numerator);
+    if (err) return err;
+    err = node_delete(node_value_one);
+    if (err) return err;
+    err = node_delete(node_value_two);
+    if (err) return err;
+    err = node_delete(node_pow_two);
+    if (err) return err;
+    err = node_delete(denominator);
+    if (err) return err;
+    err = node_delete(denominator_copy);
+    if (err) return err;
+    err = node_delete(node_value_minus_one);
+    if (err) return err;
+    err = node_delete(node_copy_);
+    if (err) return err;
+
     return err;
 }
 
@@ -542,18 +634,14 @@ ErrorCode atg_diff(TreeNode* node, int num_var)
     if (err) return err;
 
     TreeNode* node_pow_two = nullptr;
-    err = node_init(&node_pow_two);
-    if (err) return err;
-    err = node_insert_op(node_pow_two, OP_POW, node->left, node_value_two);
+    err = node_insert_op(&node_pow_two, OP_POW, node->left, node_value_two);
     if (err) return err;
 
     TreeNode* denominator = nullptr;
-    err = node_init(&denominator);
-    if (err) return err;
-    err = node_insert_op(denominator, OP_ADD, node_value_one, node_pow_two);
+    err = node_insert_op(&denominator, OP_ADD, node_value_one, node_pow_two);
     if (err) return err;
 
-    err = node_insert_op(node, OP_DIV, numerator, denominator);
+    err = node_insert_op(&node, OP_DIV, numerator, denominator);
     if (err) return err;
     
     for (TreeNode* np = node; np; np = np->parent)
@@ -598,23 +686,19 @@ ErrorCode actg_diff(TreeNode* node, int num_var)
     if (err) return err;
 
     TreeNode* node_pow_two = nullptr;
-    err = node_init(&node_pow_two);
-    if (err) return err;
-    err = node_insert_op(node_pow_two, OP_POW, node->left, node_value_two);
+    err = node_insert_op(&node_pow_two, OP_POW, node->left, node_value_two);
     if (err) return err;
 
     TreeNode* denominator = nullptr;
-    err = node_init(&denominator);
-    if (err) return err;
-    err = node_insert_op(denominator, OP_ADD, node_value_one, node_pow_two);
+    err = node_insert_op(&denominator, OP_ADD, node_value_one, node_pow_two);
     if (err) return err;
 
-    err = node_insert_op(node, OP_DIV, numerator, denominator);
+    err = node_insert_op(&node, OP_DIV, numerator, denominator);
     if (err) return err;
     TreeNode* node_copy_ = nullptr;
     err = node_copy(node, &node_copy_);
     if (err) return err;
-    err = node_insert_op(node, OP_MUL, node_value_minus_one, node_copy_);
+    err = node_insert_op(&node, OP_MUL, node_value_minus_one, node_copy_);
     if (err) return err;
     
     for (TreeNode* np = node; np; np = np->parent)
@@ -655,7 +739,7 @@ ErrorCode sh_diff(TreeNode* node, int num_var)
     err = node_diff(node_left_diff, num_var);
     if (err) return err;
 
-    err = node_insert_op(node, OP_MUL, node_left_diff, node_copy_);
+    err = node_insert_op(&node, OP_MUL, node_left_diff, node_copy_);
     if (err) return err;
 
     for (TreeNode* np = node; np; np = np->parent)
@@ -686,7 +770,7 @@ ErrorCode ch_diff(TreeNode* node, int num_var)
     err = node_diff(node_left_diff, num_var);
     if (err) return err;
 
-    err = node_insert_op(node, OP_MUL, node_left_diff, node_copy_);
+    err = node_insert_op(&node, OP_MUL, node_left_diff, node_copy_);
     if (err) return err;
 
     for (TreeNode* np = node; np; np = np->parent)
@@ -722,12 +806,10 @@ ErrorCode th_diff(TreeNode* node, int num_var)
     if (err) return err;
 
     TreeNode* denominator = nullptr;
-    err = node_init(&denominator);
-    if (err) return err;
-    err = node_insert_op(denominator, OP_POW, node_copy_, node_value_two);
+    err = node_insert_op(&denominator, OP_POW, node_copy_, node_value_two);
     if (err) return err;
 
-    err = node_insert_op(node, OP_DIV, numerator, denominator);
+    err = node_insert_op(&node, OP_DIV, numerator, denominator);
     if (err) return err;
     
     for (TreeNode* np = node; np; np = np->parent)
@@ -771,19 +853,17 @@ ErrorCode cth_diff(TreeNode* node, int num_var)
     if (err) return err;
 
     TreeNode* denominator = nullptr;
-    err = node_init(&denominator);
-    if (err) return err;
-    err = node_insert_op(denominator, OP_POW, node_copy_, node_value_two);
+    err = node_insert_op(&denominator, OP_POW, node_copy_, node_value_two);
     if (err) return err;
 
-    err = node_insert_op(node, OP_DIV, numerator, denominator);
+    err = node_insert_op(&node, OP_DIV, numerator, denominator);
     if (err) return err;
     err = node_delete(node_copy_);
     if (err) return err;
     err = node_copy(node, &node_copy_);
     if (err) return err;
 
-    err = node_insert_op(node, OP_MUL, node_value_minus_one, node_copy_);
+    err = node_insert_op(&node, OP_MUL, node_value_minus_one, node_copy_);
     if (err) return err;
     
     for (TreeNode* np = node; np; np = np->parent)

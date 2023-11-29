@@ -81,37 +81,38 @@ ErrorCode node_copy(TreeNode* node, TreeNode** new_node)
     return ERROR_NO;
 }
 
-ErrorCode node_insert_op(TreeNode* dest, TypeOperator operator_, 
+ErrorCode node_insert_op(TreeNode** dest, TypeOperator operator_, 
                          TreeNode* left, TreeNode* right)
 {   
+    assert(dest);
     ErrorCode err = ERROR_NO;
 
-    if (!dest) err = node_init(&dest);
+    if (!(*dest)) err = node_init(dest);
     if (err) return err;
 
-    if (dest->left) err =  node_delete(dest->left);
+    if ((*dest)->left) err =  node_delete((*dest)->left);
     if (err) return err;
-    if (dest->right) err = node_delete(dest->right);
-    if (err) return err;
-
-    dest->type_value =  TYPE_OP;
-    dest->value =       operator_;
-
-    if (left)   err = node_copy(left, &dest->left);
-    else        dest->left = nullptr;
+    if ((*dest)->right) err = node_delete((*dest)->right);
     if (err) return err;
 
-    if (right)  err = node_copy(right, &dest->right);
-    else        dest->right = nullptr;
+    (*dest)->type_value =  TYPE_OP;
+    (*dest)->value =       operator_;
+
+    if (left)   err = node_copy(left, &(*dest)->left);
+    else        (*dest)->left = nullptr;
+    if (err) return err;
+
+    if (right)  err = node_copy(right, &(*dest)->right);
+    else        (*dest)->right = nullptr;
     if (err) return err;
 
     int depth = 0;
-    err = node_get_depth(dest, &depth);
+    err = node_get_depth((*dest), &depth);
     if (err) return err;
-    dest->depth = depth;
+    (*dest)->depth = depth;
 
-    if (dest->left)  dest->left->parent =  dest;
-    if (dest->right) dest->right->parent = dest;
+    if ((*dest)->left)  (*dest)->left->parent =  (*dest);
+    if ((*dest)->right) (*dest)->right->parent = (*dest);
 
     return ERROR_NO;
 }
