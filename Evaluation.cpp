@@ -53,6 +53,7 @@ static ErrorCode node_eval_(TreeNode* node, Variables* vars, double* eval_equati
     if (node->type_value == TYPE_NUM) {
         *eval_equation = node->value;
     } else if (node->type_value == TYPE_VAR) {
+        if (vars->var[(int)node->value].valid == 0) return ERROR_INVALID_VAR_EVAL;
         *eval_equation = vars->var[(int)node->value].value;
     } else if (node->type_value == TYPE_OP) {
         op_eval(node, eval_equation, left_eval, right_eval);

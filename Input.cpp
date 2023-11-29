@@ -422,8 +422,10 @@ static ErrorCode vars_increase_cap(Variables* vars)
     vars->var = (Variable*)realloc(vars->var, vars->capacity * sizeof(Variable));
     if (!vars->var) return ERROR_ALLOC_FAIL;
 
-    for (int i = vars->count; i < vars->capacity; i++)
+    for (int i = vars->count; i < vars->capacity; i++) {
         vars->var[i].valid = 0;
+        vars->var[i].value = POISON_VALUE;
+    }
 
     return ERROR_NO;
 }

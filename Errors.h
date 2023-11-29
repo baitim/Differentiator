@@ -27,6 +27,7 @@ enum ErrorCode {
     ERROR_DIVISION_ZERO =       1 << 16,
     ERROR_DUPLICATE_VAR =       1 << 17,
     ERROR_INVALID_CMD_DATA =    1 << 18,
+    ERROR_INVALID_VAR_EVAL =    1 << 19,
 };
 
 const Error ERRORS[] = {
@@ -50,6 +51,7 @@ const Error ERRORS[] = {
     {ERROR_DIVISION_ZERO,       "division by zero is evalute"},
     {ERROR_DUPLICATE_VAR,       "reinitialization variable in input file"},
     {ERROR_INVALID_CMD_DATA,    "cmd data already free"},
+    {ERROR_INVALID_VAR_EVAL,    "use variable without value"},
 };
 const int COUNT_ERRORS = sizeof(ERRORS) / sizeof(Error);
 
