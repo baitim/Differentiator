@@ -79,12 +79,12 @@ ErrorCode tg_diff       (TreeNode* node, int num_var);
 ErrorCode ctg_diff      (TreeNode* node, int num_var);
 ErrorCode asin_diff     (TreeNode* node, int /*num_var*/);
 ErrorCode acos_diff     (TreeNode* node, int /*num_var*/);
-ErrorCode atg_diff      (TreeNode* node, int /*num_var*/);
-ErrorCode actg_diff     (TreeNode* node, int /*num_var*/);
+ErrorCode atg_diff      (TreeNode* node, int num_var);
+ErrorCode actg_diff     (TreeNode* node, int num_var);
 ErrorCode sh_diff       (TreeNode* node, int num_var);
 ErrorCode ch_diff       (TreeNode* node, int num_var);
-ErrorCode th_diff       (TreeNode* node, int /*num_var*/);
-ErrorCode cth_diff      (TreeNode* node, int /*num_var*/);
+ErrorCode th_diff       (TreeNode* node, int num_var);
+ErrorCode cth_diff      (TreeNode* node, int num_var);
 
 ErrorCode err_simplify  (TreeNode* node);
 ErrorCode add_simplify  (TreeNode* node);
