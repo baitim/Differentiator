@@ -1,14 +1,14 @@
 #include <assert.h>
+#include <cstdlib>
 #include <stdio.h>
 #include <string.h>
-#include <cstdlib>
 #include <time.h>
 
 #include "ANSI_colors.h"
-#include "Output.h"
-#include "Node.h"
-#include "Math.h"
 #include "Evaluation.h"
+#include "Math.h"
+#include "Node.h"
+#include "Output.h"
 #include "ProcessCmd.h"
 
 enum Branch {

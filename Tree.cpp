@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "Tree.h"
-#include "Output.h"
 #include "Math.h"
+#include "Output.h"
+#include "Tree.h"
 
 enum TypeNodeColor {
     NODE_COLOR_WHITE = 0,

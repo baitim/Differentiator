@@ -1,10 +1,8 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include <stdio.h>
-
-#include "Tree.h"
 #include "Errors.h"
+#include "Tree.h"
 
 static const int MAX_SIZE_INPUT = 500;
 

@@ -1,10 +1,11 @@
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "ANSI_colors.h"
 #include "Evaluation.h"
-#include "Math.h"
 #include "Input.h"
+#include "Math.h"
 
 static ErrorCode tree_eval_ (TreeNode* node, Variables* vars, double* eval_equation);
 static ErrorCode node_eval_ (TreeNode* node, Variables* vars, double* eval_equation,

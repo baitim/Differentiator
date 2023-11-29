@@ -1,10 +1,11 @@
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "ANSI_colors.h"
 #include "Differentiation.h"
-#include "Math.h"
 #include "Input.h"
+#include "Math.h"
 
 static ErrorCode tree_diff_     (TreeNode* node, int num_var);
 static ErrorCode node_diff      (TreeNode* node, int num_var);

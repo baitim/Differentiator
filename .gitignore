@@ -2,4 +2,6 @@ tree
 /.vscode
 MainTree
 TreeDiff
+TreeDiffSimple
+TreeSimple
 equation*

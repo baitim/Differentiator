@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -7,8 +8,7 @@
 
 #include "ANSI_colors.h"
 #include "Input.h"
-
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#include "Math.h"
 
 static ErrorCode tree_read_     (TreeNode** node, Variables* vars, char** buf, int *dep);
 static ErrorCode vars_read_     (Variables* vars, char** buf);

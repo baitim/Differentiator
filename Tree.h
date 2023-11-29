@@ -1,8 +1,6 @@
 #ifndef TREE_H
 #define TREE_H
 
-#include <stdio.h>
-
 #include "Errors.h"
 #include "Node.h"
 

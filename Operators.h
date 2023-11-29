@@ -2,7 +2,7 @@
 #define OPERATORS_H
 
 enum TypeOperator {
-    OP_ERR =  -1,
+    OP_ERR =   0,
     OP_ADD =   1,
     OP_SUB =   2,
     OP_MUL =   3,
@@ -27,19 +27,19 @@ enum TypeOperator {
 
 #include "Node.h"
 
-struct Operator {
-    TypeOperator type_op;
-    const char* name;
-    int ops_num;
-    ErrorCode (*eval)(double* eval_equation, double left_eval, double right_eval);
-    ErrorCode (*diff)(TreeNode* node, int num_var);
-    ErrorCode (*simp)(TreeNode* node);
-};
-
 enum OperatorType {
     OP_TYPE_ERR = -1,
     OP_TYPE_UN =   1,
     OP_TYPE_BIN =  2,
+};
+
+struct Operator {
+    TypeOperator type_op;
+    const char* name;
+    OperatorType ops_num;
+    ErrorCode (*eval)(double* eval_equation, double left_eval, double right_eval);
+    ErrorCode (*diff)(TreeNode* node, int num_var);
+    ErrorCode (*simp)(TreeNode* node, int* is_change);
 };
 
 ErrorCode err_eval      (double* eval_equation, double left_eval, double right_eval);
@@ -86,27 +86,27 @@ ErrorCode ch_diff       (TreeNode* node, int num_var);
 ErrorCode th_diff       (TreeNode* node, int num_var);
 ErrorCode cth_diff      (TreeNode* node, int num_var);
 
-ErrorCode err_simplify  (TreeNode* node);
-ErrorCode add_simplify  (TreeNode* node);
-ErrorCode sub_simplify  (TreeNode* node);
-ErrorCode mul_simplify  (TreeNode* node);
-ErrorCode div_simplify  (TreeNode* node);
-ErrorCode pow_simplify  (TreeNode* node);
-ErrorCode log_simplify  (TreeNode* node);
-ErrorCode ln_simplify   (TreeNode* node);
-ErrorCode sqrt_simplify (TreeNode* node);
-ErrorCode sin_simplify  (TreeNode* node);
-ErrorCode cos_simplify  (TreeNode* node);
-ErrorCode tg_simplify   (TreeNode* node);
-ErrorCode ctg_simplify  (TreeNode* node);
-ErrorCode asin_simplify (TreeNode* node);
-ErrorCode acos_simplify (TreeNode* node);
-ErrorCode atg_simplify  (TreeNode* node);
-ErrorCode actg_simplify (TreeNode* node);
-ErrorCode sh_simplify   (TreeNode* node);
-ErrorCode ch_simplify   (TreeNode* node);
-ErrorCode th_simplify   (TreeNode* node);
-ErrorCode cth_simplify  (TreeNode* node);
+ErrorCode err_simplify  (TreeNode* node, int* /*is_change*/);
+ErrorCode add_simplify  (TreeNode* node, int* /*is_change*/);
+ErrorCode sub_simplify  (TreeNode* node, int* /*is_change*/);
+ErrorCode mul_simplify  (TreeNode* node, int* /*is_change*/);
+ErrorCode div_simplify  (TreeNode* node, int* /*is_change*/);
+ErrorCode pow_simplify  (TreeNode* node, int* /*is_change*/);
+ErrorCode log_simplify  (TreeNode* node, int* /*is_change*/);
+ErrorCode ln_simplify   (TreeNode* node, int* /*is_change*/);
+ErrorCode sqrt_simplify (TreeNode* node, int* /*is_change*/);
+ErrorCode sin_simplify  (TreeNode* node, int* /*is_change*/);
+ErrorCode cos_simplify  (TreeNode* node, int* /*is_change*/);
+ErrorCode tg_simplify   (TreeNode* node, int* /*is_change*/);
+ErrorCode ctg_simplify  (TreeNode* node, int* /*is_change*/);
+ErrorCode asin_simplify (TreeNode* node, int* /*is_change*/);
+ErrorCode acos_simplify (TreeNode* node, int* /*is_change*/);
+ErrorCode atg_simplify  (TreeNode* node, int* /*is_change*/);
+ErrorCode actg_simplify (TreeNode* node, int* /*is_change*/);
+ErrorCode sh_simplify   (TreeNode* node, int* /*is_change*/);
+ErrorCode ch_simplify   (TreeNode* node, int* /*is_change*/);
+ErrorCode th_simplify   (TreeNode* node, int* /*is_change*/);
+ErrorCode cth_simplify  (TreeNode* node, int* /*is_change*/);
 
 const Operator OPERATORS[] = {
     {OP_ERR,    "$",        OP_TYPE_ERR,    err_eval,   err_diff,   err_simplify    },

@@ -1,8 +1,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "Node.h"
 #include "Math.h"
+#include "Node.h"
 
 ErrorCode node_init(TreeNode** node)
 {
