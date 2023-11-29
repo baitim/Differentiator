@@ -21,7 +21,7 @@ ErrorCode node_init(TreeNode** node)
     return ERROR_NO;
 }
 
-ErrorCode node_init_num(TreeNode** node, int value)
+ErrorCode node_init_num(TreeNode** node, double value)
 {
     assert(node);
     

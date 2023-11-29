@@ -125,7 +125,7 @@ ErrorCode mul_diff(TreeNode* node, int num_var)
 
     ErrorCode err = ERROR_NO;
 
-    TreeNode* node_left_copy =  nullptr;
+    TreeNode* node_left_copy = nullptr;
     err = node_copy(node->left, &node_left_copy);
     if (err) return err;
 
@@ -133,13 +133,13 @@ ErrorCode mul_diff(TreeNode* node, int num_var)
     err = node_copy(node->right, &node_right_copy);
     if (err) return err;
 
-    TreeNode* node_left_diff =  nullptr;
+    TreeNode* node_left_diff = nullptr;
     err = node_copy(node_left_copy, &node_left_diff);
     if (err) return err;
     err = node_diff(node_left_diff, num_var);
     if (err) return err;
 
-    TreeNode* node_right_diff =  nullptr;
+    TreeNode* node_right_diff = nullptr;
     err = node_copy(node_right_copy, &node_right_diff);
     if (err) return err;
     err = node_diff(node_right_diff, num_var);
@@ -215,20 +215,80 @@ ErrorCode div_diff(TreeNode* node, int num_var)
     return err;
 }
 
-ErrorCode pow_diff(TreeNode* node, int /*num_var*/)
+ErrorCode pow_diff(TreeNode* node, int num_var)
 {
     assert(node);
 
     ErrorCode err = ERROR_NO;
+
+    TreeNode* node_left_ln = nullptr;
+    err = node_insert_op(&node_left_ln, OP_LN, node->left, nullptr);
+    if (err) return err;
+
+    TreeNode* node_degree = nullptr;
+    err = node_insert_op(&node_degree, OP_MUL, node_left_ln, node->right);
+    if (err) return err;
+
+    TreeNode* node_value_exp = nullptr;
+    err = node_init_num(&node_value_exp, M_E);
+    if (err) return err;
+
+    TreeNode* node_exp_pow = nullptr;
+    err = node_insert_op(&node_exp_pow, OP_POW, node_value_exp, node_degree);
+    if (err) return err;
+
+    TreeNode* node_degree_diff = nullptr;
+    err = node_copy(node_degree, &node_degree_diff);
+    if (err) return err;
+    err = node_diff(node_degree_diff, num_var);
+    if (err) return err;
+
+    err = node_insert_op(&node, OP_MUL, node_exp_pow, node_degree_diff);
+    if (err) return err;
+
+    for (TreeNode* np = node; np; np = np->parent)
+        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+
+    err = node_delete(node_left_ln);
+    if (err) return err;
+    err = node_delete(node_degree);
+    if (err) return err;
+    err = node_delete(node_value_exp);
+    if (err) return err;
+    err = node_delete(node_exp_pow);
+    if (err) return err;
+    err = node_delete(node_degree_diff);
+    if (err) return err;
     
     return err;
 }
 
-ErrorCode log_diff(TreeNode* node, int /*num_var*/)
+ErrorCode log_diff(TreeNode* node, int num_var)
 {
     assert(node);
 
     ErrorCode err = ERROR_NO;
+
+    TreeNode* node_left_ln = nullptr;
+    err = node_insert_op(&node_left_ln, OP_LN, node->left, nullptr);
+    if (err) return err;
+
+    TreeNode* node_right_ln = nullptr;
+    err = node_insert_op(&node_right_ln, OP_LN, node->right, nullptr);
+    if (err) return err;
+
+    err = node_insert_op(&node, OP_DIV, node_right_ln, node_left_ln);
+    if (err) return err;
+    err = node_diff(node, num_var);
+    if (err) return err;
+
+    for (TreeNode* np = node; np; np = np->parent)
+        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+
+    err = node_delete(node_left_ln);
+    if (err) return err;
+    err = node_delete(node_right_ln);
+    if (err) return err;
     
     return err;
 }
@@ -239,37 +299,25 @@ ErrorCode ln_diff(TreeNode* node, int num_var)
 
     ErrorCode err = ERROR_NO;
 
-    TreeNode* node_left_copy =  nullptr;
-    err = node_copy(node->left, &node_left_copy);
+    TreeNode* numerator = nullptr;
+    err = node_copy(node->left, &numerator);
+    if (err) return err;
+    err = node_diff(numerator, num_var);
     if (err) return err;
 
-    TreeNode* node_value_one = nullptr;
-    err = node_init_num(&node_value_one, 1);
+    TreeNode* denominator = nullptr;
+    err = node_copy(node->left, &denominator);
     if (err) return err;
 
-    TreeNode* fraction = nullptr;
-    err = node_insert_op(&fraction, OP_DIV, node_value_one, node_left_copy);
-    if (err) return err;
-
-    TreeNode* node_left_diff =  nullptr;
-    err = node_copy(node->left, &node_left_diff);
-    if (err) return err;
-    err = node_diff(node_left_diff, num_var);
-    if (err) return err;
-
-    err = node_insert_op(&node, OP_MUL, node_left_diff, fraction);
+    err = node_insert_op(&node, OP_DIV, numerator, denominator);
     if (err) return err;
 
     for (TreeNode* np = node; np; np = np->parent)
         np->depth = MAX(np->left->depth, np->right->depth) + 1;
 
-    err = node_delete(node_left_copy);
+    err = node_delete(numerator);
     if (err) return err;
-    err = node_delete(node_value_one);
-    if (err) return err;
-    err = node_delete(fraction);
-    if (err) return err;
-    err = node_delete(node_left_diff);
+    err = node_delete(denominator);
     if (err) return err;
     
     return err;
@@ -323,7 +371,7 @@ ErrorCode sin_diff(TreeNode* node, int num_var)
 
     ErrorCode err = ERROR_NO;
 
-    TreeNode* node_copy_ =  nullptr;
+    TreeNode* node_copy_ = nullptr;
     err = node_copy(node, &node_copy_);
     if (err) return err;
     node_copy_->value = OP_COS;
@@ -728,7 +776,7 @@ ErrorCode sh_diff(TreeNode* node, int num_var)
 
     ErrorCode err = ERROR_NO;
 
-    TreeNode* node_copy_ =  nullptr;
+    TreeNode* node_copy_ = nullptr;
     err = node_copy(node, &node_copy_);
     if (err) return err;
     node_copy_->value = OP_CH;
