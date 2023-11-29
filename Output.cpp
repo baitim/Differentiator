@@ -531,7 +531,7 @@ static ErrorCode write_left_parenthesis(TreeNode* node, FILE* dump_file, Branch 
         if (par_op == OP_SIN)  fprintf(dump_file, "\\sin{");
         if (par_op == OP_COS)  fprintf(dump_file, "\\cos{");
         if (par_op == OP_TG)   fprintf(dump_file, "\\tan{");
-        if (par_op == OP_CTG)  fprintf(dump_file, "\\ctan{");
+        if (par_op == OP_CTG)  fprintf(dump_file, "\\cot{");
         if (par_op == OP_ASIN) fprintf(dump_file, "\\arcsin{");
         if (par_op == OP_ACOS) fprintf(dump_file, "\\arccos{");
         if (par_op == OP_ATG)  fprintf(dump_file, "\\arctan{");

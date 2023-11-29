@@ -21,6 +21,23 @@ ErrorCode node_init(TreeNode** node)
     return ERROR_NO;
 }
 
+ErrorCode node_init_num(TreeNode** node, int value)
+{
+    assert(node);
+    
+    *node = (TreeNode*)calloc(1, sizeof(TreeNode));
+    if (!*node) return ERROR_ALLOC_FAIL;
+
+    (*node)->type_value =   TYPE_NUM;
+    (*node)->value =        value;
+    (*node)->depth =        1;
+    (*node)->parent =       nullptr;
+    (*node)->left =         nullptr;
+    (*node)->right =        nullptr;
+
+    return ERROR_NO;
+}
+
 ErrorCode node_delete(TreeNode* node) 
 {
     if (!node) return ERROR_INVALID_TREE;
