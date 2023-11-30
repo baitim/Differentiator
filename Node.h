@@ -3,7 +3,13 @@
 
 #include "Errors.h"
 
-static const int POISON_VALUE = -0xbe;
+static const size_t POISON_VALUE = (size_t)-0xbe;
+
+enum Branch {
+    BRANCH_ERR =   0,
+    BRANCH_LEFT = -1,
+    BRANCH_RIGHT = 1,
+};
 
 enum TreeDataType {
     TYPE_ERR = -1,
@@ -15,7 +21,7 @@ enum TreeDataType {
 struct TreeNode {
     TreeDataType type_value;
     double value;
-    int depth;
+    size_t depth;
     TreeNode* left;
     TreeNode* right;
     TreeNode* parent;
@@ -30,7 +36,7 @@ ErrorCode node_delete   (TreeNode* node);
 ErrorCode node_copy     (TreeNode* node, TreeNode** new_node);
 ErrorCode node_insert_op(TreeNode** dest, TypeOperator operator_, 
                          TreeNode* left, TreeNode* right);
-ErrorCode node_get_depth(TreeNode* node, int* depth);
+ErrorCode node_get_depth(TreeNode* node, size_t* depth);
 
 #include "Tree.h"
 

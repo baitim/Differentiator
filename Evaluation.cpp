@@ -114,7 +114,7 @@ ErrorCode err_eval(double* eval_equation, double left_eval, double right_eval)
 
     printf("Called err_eval with eval = %lf, left_eval = %lf, right_eval = %lf\n",
             *eval_equation, left_eval, right_eval);
-    assert(0);
+    return ERROR_EVALUATION;
 }
 
 ErrorCode add_eval(double* eval_equation, double left_eval, double right_eval)

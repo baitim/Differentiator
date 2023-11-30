@@ -12,7 +12,7 @@ ErrorCode node_init(TreeNode** node)
     if (!*node) return ERROR_ALLOC_FAIL;
 
     (*node)->type_value =   TYPE_ERR;
-    (*node)->value =        POISON_VALUE;
+    (*node)->value =        (int)POISON_VALUE;
     (*node)->depth =        POISON_VALUE;
     (*node)->parent =       nullptr;
     (*node)->left =         nullptr;
@@ -50,7 +50,10 @@ ErrorCode node_delete(TreeNode* node)
     if (node->right) err = node_delete(node->right);
     if (err) return err;
     
-    node->depth = POISON_VALUE;
+    node->depth =   POISON_VALUE;
+    node->left =    nullptr;
+    node->right =   nullptr;
+    node->parent =  nullptr;
 
     free(node);
     return ERROR_NO;
@@ -106,7 +109,7 @@ ErrorCode node_insert_op(TreeNode** dest, TypeOperator operator_,
     else        (*dest)->right = nullptr;
     if (err) return err;
 
-    int depth = 0;
+    size_t depth = 0;
     err = node_get_depth((*dest), &depth);
     if (err) return err;
     (*dest)->depth = depth;
@@ -117,12 +120,12 @@ ErrorCode node_insert_op(TreeNode** dest, TypeOperator operator_,
     return ERROR_NO;
 }
 
-ErrorCode node_get_depth(TreeNode* node, int* depth)
+ErrorCode node_get_depth(TreeNode* node, size_t* depth)
 {
     assert(node);
 
-    int left_depth =  0;
-    int right_depth = 0;
+    size_t left_depth =  0;
+    size_t right_depth = 0;
     if (node->left)  left_depth =  node->left->depth;
     if (node->right) right_depth = node->right->depth;
     (*depth) = MAX(left_depth, right_depth) + 1;

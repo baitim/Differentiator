@@ -11,12 +11,6 @@
 #include "Output.h"
 #include "ProcessCmd.h"
 
-enum Branch {
-    BRANCH_ERR =   0,
-    BRANCH_LEFT = -1,
-    BRANCH_RIGHT = 1,
-};
-
 const int MAX_SIZE_NAME_DUMP = 100;
 const int MAX_SIZE_COMMAND = 500;
 
@@ -97,7 +91,7 @@ ErrorCode tree_graph_dump(Tree* tree, int num_var)
     if (err) return err;
 
     char py_path[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(py_path, MAX_SIZE_NAME_DUMP, "%s/py/%s%d", tree->name, tree->name, 
+    snprintf(py_path, MAX_SIZE_NAME_DUMP, "%s/py/%s%zu", tree->name, tree->name, 
                                            tree->output_info->number_graph_dump);
 
     char *name_py_file = nullptr;
@@ -110,7 +104,7 @@ ErrorCode tree_graph_dump(Tree* tree, int num_var)
     }
 
     char graph_path[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(graph_path, MAX_SIZE_NAME_DUMP, "%s/graph/%s%d", tree->name, tree->name, 
+    snprintf(graph_path, MAX_SIZE_NAME_DUMP, "%s/graph/%s%zu", tree->name, tree->name, 
                                               tree->output_info->number_graph_dump);
 
     EvalPoints graph = {-5, 20, 20, -5, 0.05f};
@@ -152,7 +146,7 @@ static ErrorCode tree_write_points(Tree* tree, int num_var, EvalPoints* graph, F
 
     if (graph->right_border < graph->left_border) return tree_verify(tree->root);
 
-    int size = (int)((double)(graph->right_border - graph->left_border) / graph->step_values) + 1;
+    size_t size = (size_t)((graph->right_border - graph->left_border) / graph->step_values) + 1;
 
     double* x = (double*)calloc(size, sizeof(double));
     if (!x) return ERROR_ALLOC_FAIL;
@@ -163,7 +157,7 @@ static ErrorCode tree_write_points(Tree* tree, int num_var, EvalPoints* graph, F
     if (err) return err;
 
     fprintf(dump_file, "x = [");
-    for (int i = 0; i < size - 1; i++)
+    for (size_t i = 0; i < size - 1; i++)
         if (!is_double_equal(graph->max_value * 2, y[i]))
             fprintf(dump_file, "%lf, ", x[i]);
     if (!is_double_equal(graph->max_value * 2, y[size - 1]))
@@ -171,7 +165,7 @@ static ErrorCode tree_write_points(Tree* tree, int num_var, EvalPoints* graph, F
     fprintf(dump_file, "]\n");
 
     fprintf(dump_file, "y = [");
-    for (int i = 0; i < size - 1; i++)
+    for (size_t i = 0; i < size - 1; i++)
         if (!is_double_equal(graph->max_value * 2, y[i]))
             fprintf(dump_file, "%lf, ", y[i]);
     if (!is_double_equal(graph->max_value * 2, y[size - 1]))
@@ -238,7 +232,7 @@ ErrorCode tree_svg_dump(Tree* tree)
     if (err) return err;
 
     char dot_path[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(dot_path, MAX_SIZE_NAME_DUMP, "%s/dot/%s%d", tree->name, tree->name, 
+    snprintf(dot_path, MAX_SIZE_NAME_DUMP, "%s/dot/%s%zu", tree->name, tree->name, 
                                             tree->output_info->number_svg_dump);
 
     char *name_dot_file = nullptr;
@@ -270,7 +264,7 @@ ErrorCode tree_svg_dump(Tree* tree)
     fclose(dump_file);
 
     char svg_path[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(svg_path, MAX_SIZE_NAME_DUMP, "%s/svg/%s%d", tree->name, tree->name, 
+    snprintf(svg_path, MAX_SIZE_NAME_DUMP, "%s/svg/%s%zu", tree->name, tree->name, 
                                             tree->output_info->number_svg_dump);
 
     char *name_svg_file = nullptr;
@@ -302,12 +296,12 @@ static ErrorCode tree_svg_dump_make_node(TreeNode* node, Variables* vars, FILE* 
                        "\t\tnode%p[label = \"{ ", node);
     if (node->type_value == TYPE_NUM) {
         fprintf(dump_file, "%.2lf", node->value);
-        fprintf(dump_file, " | dep = %d }\", fillcolor = \"#ab5b0f\"];\n", node->depth);
+        fprintf(dump_file, " | dep = %zu }\", fillcolor = \"#ab5b0f\"];\n", node->depth);
     } else if (node->type_value == TYPE_OP) {
         for (int i = 0; i < COUNT_OPs; i++) {
             if (is_double_equal(OPERATORS[i].type_op, node->value)) {
                 fprintf(dump_file, "%s", OPERATORS[i].name);
-                fprintf(dump_file, " | dep = %d }\", fillcolor = \"#e3964d\"];\n", node->depth);
+                fprintf(dump_file, " | dep = %zu }\", fillcolor = \"#e3964d\"];\n", node->depth);
             }
         }
     } else if (node->type_value == TYPE_VAR) {
@@ -316,7 +310,7 @@ static ErrorCode tree_svg_dump_make_node(TreeNode* node, Variables* vars, FILE* 
                                 vars->var[(int)node->value].value);
         else 
             fprintf(dump_file, "%s", vars->var[(int)node->value].name);
-        fprintf(dump_file, " | dep = %d }\", fillcolor = \"#f79e19\"];\n", node->depth);
+        fprintf(dump_file, " | dep = %zu }\", fillcolor = \"#f79e19\"];\n", node->depth);
     }
     fprintf(dump_file, "\t}\n");
 
@@ -350,7 +344,7 @@ ErrorCode tree_html_dump(Tree* tree)
     if (err) return err;
 
     char buffer[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(buffer, MAX_SIZE_NAME_DUMP, "%s/html/%s%d.html", tree->name, tree->name, 
+    snprintf(buffer, MAX_SIZE_NAME_DUMP, "%s/html/%s%zu.html", tree->name, tree->name, 
                                           tree->output_info->number_html_dump);
 
     FILE* html_file = fopen(buffer, "w");
@@ -361,8 +355,8 @@ ErrorCode tree_html_dump(Tree* tree)
 
     fprintf(html_file, "<pre>\n");
 
-    for (int i = 1; i < tree->output_info->number_svg_dump; i++) {
-        fprintf(html_file, "<img src = \"../svg/%s%d.svg\">\n", tree->name, i);
+    for (size_t i = 1; i < tree->output_info->number_svg_dump; i++) {
+        fprintf(html_file, "<img src = \"../svg/%s%zu.svg\">\n", tree->name, i);
     }
 
     fprintf(html_file, "</pre>\n");
@@ -381,7 +375,7 @@ ErrorCode tree_tex_dump(Tree* tree)
     if (err) return err;
 
     char tex_path[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(tex_path, MAX_SIZE_NAME_DUMP, "%s/tex/%s%d", tree->name, tree->name, 
+    snprintf(tex_path, MAX_SIZE_NAME_DUMP, "%s/tex/%s%zu", tree->name, tree->name, 
                                             tree->output_info->number_tex_dump);
 
     char *name_tex_file = nullptr;
@@ -419,7 +413,7 @@ ErrorCode tree_tex_dump(Tree* tree)
     fclose(dump_file);
 
     char pdf_path[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(pdf_path, MAX_SIZE_NAME_DUMP, "%s/pdf/%s%d", tree->name, tree->name, 
+    snprintf(pdf_path, MAX_SIZE_NAME_DUMP, "%s/pdf/%s%zu", tree->name, tree->name, 
                                             tree->output_info->number_tex_dump);
 
     char *name_aux_file = nullptr;
@@ -584,9 +578,9 @@ static ErrorCode write_right_parenthesis(TreeNode* node, FILE* dump_file,
 
 static ErrorCode make_name_file(char* buffer, const char *type, char** name_dump_file)
 {
-    int len_buf = (int)strlen(buffer);
-    int len_type = (int)strlen(type);
-    int size_dump_file = len_buf + len_type + 1;
+    size_t len_buf = strlen(buffer);
+    size_t len_type = strlen(type);
+    size_t size_dump_file = len_buf + len_type + 1;
     *name_dump_file = (char*)calloc(size_dump_file, sizeof(char));
     (*name_dump_file) = (char*)memcpy((*name_dump_file), buffer, len_buf * sizeof(char) + 1);
     if (!(*name_dump_file)) return ERROR_ALLOC_FAIL;

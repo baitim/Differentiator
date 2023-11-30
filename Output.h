@@ -5,10 +5,10 @@
 #include "Tree.h"
 
 struct OutputInfo {
-    int number_graph_dump;
-    int number_svg_dump;
-    int number_tex_dump;
-    int number_html_dump;
+    size_t number_graph_dump;
+    size_t number_svg_dump;
+    size_t number_tex_dump;
+    size_t number_html_dump;
 };
 
 ErrorCode print_help        ();

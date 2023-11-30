@@ -89,7 +89,7 @@ ErrorCode err_diff(TreeNode* node, int num_var)
 {
     assert(node);
     printf("Called err_diff with node = %p and num = %d\n", node, num_var);
-    assert(0);
+    return ERROR_DIFFERENTIATION;
 }
 
 ErrorCode add_diff(TreeNode* node, int num_var)
@@ -153,8 +153,12 @@ ErrorCode mul_diff(TreeNode* node, int num_var)
     err = node_insert_op(&node->right, OP_MUL, node_left_copy, node_right_diff);
     if (err) return err;
     
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(node_left_copy);
     if (err) return err;
@@ -198,7 +202,7 @@ ErrorCode div_diff(TreeNode* node, int num_var)
     if (err) return err;
     
     for (TreeNode* np = node; np; np = np->parent) {
-        int depth = 0;
+        size_t depth = 0;
         err = node_get_depth(np, &depth);
         if (err) return err;
         np->depth = depth;
@@ -247,8 +251,12 @@ ErrorCode pow_diff(TreeNode* node, int num_var)
     err = node_insert_op(&node, OP_MUL, node_exp_pow, node_degree_diff);
     if (err) return err;
 
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(node_left_ln);
     if (err) return err;
@@ -283,8 +291,12 @@ ErrorCode log_diff(TreeNode* node, int num_var)
     err = node_diff(node, num_var);
     if (err) return err;
 
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(node_left_ln);
     if (err) return err;
@@ -313,8 +325,12 @@ ErrorCode ln_diff(TreeNode* node, int num_var)
     err = node_insert_op(&node, OP_DIV, numerator, denominator);
     if (err) return err;
 
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(numerator);
     if (err) return err;
@@ -351,8 +367,12 @@ ErrorCode sqrt_diff(TreeNode* node, int num_var)
     err = node_insert_op(&node, OP_DIV, numerator, denominator);
     if (err) return err;
     
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(numerator);
     if (err) return err;
@@ -386,8 +406,12 @@ ErrorCode sin_diff(TreeNode* node, int num_var)
     err = node_insert_op(&node, OP_MUL, node_left_diff, node_copy_);
     if (err) return err;
 
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(node_copy_);
     if (err) return err;
@@ -425,8 +449,12 @@ ErrorCode cos_diff(TreeNode* node, int num_var)
     err = node_insert_op(&node, OP_MUL, node_value_minus_one, node_right);
     if (err) return err;
 
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(node_value_minus_one);
     if (err) return err;
@@ -468,8 +496,12 @@ ErrorCode tg_diff(TreeNode* node, int num_var)
     err = node_insert_op(&node, OP_DIV, numerator, denominator);
     if (err) return err;
     
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(numerator);
     if (err) return err;
@@ -522,8 +554,12 @@ ErrorCode ctg_diff(TreeNode* node, int num_var)
     err = node_insert_op(&node, OP_MUL, node_value_minus_one, node_copy_);
     if (err) return err;
     
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(node_value_minus_one);
     if (err) return err;
@@ -575,8 +611,12 @@ ErrorCode asin_diff(TreeNode* node, int num_var)
     err = node_insert_op(&node, OP_DIV, numerator, denominator);
     if (err) return err;
     
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(numerator);
     if (err) return err;
@@ -639,8 +679,12 @@ ErrorCode acos_diff(TreeNode* node, int num_var)
     err = node_insert_op(&node, OP_MUL, node_value_minus_one, node_copy_);
     if (err) return err;
     
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(numerator);
     if (err) return err;
@@ -693,8 +737,12 @@ ErrorCode atg_diff(TreeNode* node, int num_var)
     err = node_insert_op(&node, OP_DIV, numerator, denominator);
     if (err) return err;
     
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(numerator);
     if (err) return err;
@@ -750,8 +798,12 @@ ErrorCode actg_diff(TreeNode* node, int num_var)
     err = node_insert_op(&node, OP_MUL, node_value_minus_one, node_copy_);
     if (err) return err;
     
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(numerator);
     if (err) return err;
@@ -791,8 +843,12 @@ ErrorCode sh_diff(TreeNode* node, int num_var)
     err = node_insert_op(&node, OP_MUL, node_left_diff, node_copy_);
     if (err) return err;
 
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(node_copy_);
     if (err) return err;
@@ -822,8 +878,12 @@ ErrorCode ch_diff(TreeNode* node, int num_var)
     err = node_insert_op(&node, OP_MUL, node_left_diff, node_copy_);
     if (err) return err;
 
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(node_copy_);
     if (err) return err;
@@ -861,8 +921,12 @@ ErrorCode th_diff(TreeNode* node, int num_var)
     err = node_insert_op(&node, OP_DIV, numerator, denominator);
     if (err) return err;
     
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(numerator);
     if (err) return err;
@@ -915,8 +979,12 @@ ErrorCode cth_diff(TreeNode* node, int num_var)
     err = node_insert_op(&node, OP_MUL, node_value_minus_one, node_copy_);
     if (err) return err;
     
-    for (TreeNode* np = node; np; np = np->parent)
-        np->depth = MAX(np->left->depth, np->right->depth) + 1;
+    for (TreeNode* np = node; np; np = np->parent) {
+        size_t depth = 0;
+        err = node_get_depth(np, &depth);
+        if (err) return err;
+        np->depth = depth;
+    }
 
     err = node_delete(node_value_minus_one);
     if (err) return err;

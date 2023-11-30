@@ -20,7 +20,7 @@ ErrorCode variables_copy(Variables* vars, Variables** new_vars)
     (*new_vars)->var = (Variable*)calloc(vars->capacity, sizeof(Variable));
     if (!(*new_vars)->var) return ERROR_ALLOC_FAIL;
 
-    for (int i = 0; i < vars->count; i++) {
+    for (size_t i = 0; i < vars->count; i++) {
         (*new_vars)->var[i].name = strdup(vars->var[i].name);
         if (!(*new_vars)->var[i].name) return ERROR_ALLOC_FAIL;
 

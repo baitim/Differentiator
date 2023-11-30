@@ -10,9 +10,9 @@
 #include "Input.h"
 #include "Math.h"
 
-static ErrorCode tree_read_     (TreeNode** node, Variables* vars, char** buf, int *dep);
+static ErrorCode tree_read_     (TreeNode** node, Variables* vars, char** buf, size_t *dep);
 static ErrorCode vars_read_     (Variables* vars, char** buf);
-static ErrorCode fsize          (const char* name_file, int* size_file);
+static ErrorCode fsize          (const char* name_file, size_t* size_file);
 static ErrorCode get_arg        (char** buf, char* str);
 static ErrorCode check_type_arg (char* str, TreeDataType* type_arg);
 static ErrorCode write_arg      (TreeNode* node, Variables* vars, char* str, TreeDataType type_arg);
@@ -30,14 +30,14 @@ ErrorCode tree_get_val_vars(Tree* tree)
     ErrorCode err = tree_verify(tree->root);
     if (err) return err;
 
-    for (int i = 0; i < tree->variables->count; i++) {
+    for (size_t i = 0; i < tree->variables->count; i++) {
         if (!tree->variables->var[i].valid) {
             printf(print_lcyan("You should input variables:\n"));
             break;
         }
     }
                 
-    for (int i = 0; i < tree->variables->count; i++)
+    for (size_t i = 0; i < tree->variables->count; i++)
         get_var(tree->variables, i);
 
     printf(print_lcyan("All variables have value\n"));
@@ -53,7 +53,7 @@ ErrorCode tree_get_num_var(Tree* tree, int* num_var)
     if (err) return err;
 
     printf(print_lcyan("You can choose this variables:\n"));
-    for (int i = 0; i < tree->variables->count; i++)
+    for (size_t i = 0; i < tree->variables->count; i++)
         printf(print_lcyan("\t· %s\n"), tree->variables->var[i].name);
 
     char name_var[MAX_SIZE_VAR] = "";
@@ -67,9 +67,9 @@ ErrorCode tree_get_num_var(Tree* tree, int* num_var)
         }
 
         int exist = 0;
-        for (int i = 0; i < tree->variables->count; i++) {
+        for (size_t i = 0; i < tree->variables->count; i++) {
             if (strcmp(tree->variables->var[i].name, name_var) == 0) {
-                *num_var = i;
+                *num_var = (int)i;
                 exist = 1;
             }
         }
@@ -88,7 +88,7 @@ ErrorCode tree_read(Tree* tree, char** buf)
     assert(buf);
     if (!tree) return ERROR_INVALID_TREE;
 
-    int dep = 0;
+    size_t dep = 0;
     ErrorCode err = tree_read_(&tree->root, tree->variables, buf, &dep);
     if (err) return err;
 
@@ -98,13 +98,17 @@ ErrorCode tree_read(Tree* tree, char** buf)
     return ERROR_NO;
 }
 
-ErrorCode get_var(Variables* vars, int number_var)
+ErrorCode get_var(Variables* vars, size_t number_var)
 {
+    assert(vars);
+    ErrorCode err = ERROR_NO;
+
     if (!vars->var[number_var].valid) {
         printf(print_lcyan("Input value of %s: "), vars->var[number_var].name);
         int count_read = scanf("%lf", &vars->var[number_var].value);
         while (count_read != 1) {
-            clean_stdin();
+            err = clean_stdin();
+            if (err) return err;
             printf(print_lred("Wrong argument, you should input double, try again: "));
             count_read = scanf("%lf", &vars->var[number_var].value);
         }
@@ -121,7 +125,7 @@ ErrorCode clean_stdin()
     return ERROR_NO;
 }
 
-static ErrorCode tree_read_(TreeNode** node, Variables* vars, char** buf, int *dep)
+static ErrorCode tree_read_(TreeNode** node, Variables* vars, char** buf, size_t *dep)
 {
     if (!node) return ERROR_INVALID_TREE; 
     if (!buf) return ERROR_INVALID_BUF;
@@ -135,7 +139,7 @@ static ErrorCode tree_read_(TreeNode** node, Variables* vars, char** buf, int *d
         (*buf)++;
 
         *buf = skip_spaces(*buf);
-        int left_dep = 0;
+        size_t left_dep = 0;
         err = tree_read_(&(*node)->left, vars, buf, &left_dep);
         if (err) return err;
         *buf = skip_spaces(*buf);
@@ -152,7 +156,7 @@ static ErrorCode tree_read_(TreeNode** node, Variables* vars, char** buf, int *d
         if (err) return err;
 
         /////////////////////////////////////////////////////////
-        int right_dep = 0;
+        size_t right_dep = 0;
         *buf = skip_spaces(*buf);
         if (!(type_arg == TYPE_OP && OPERATORS[(int)(*node)->value].ops_num == 1)) {
             err = tree_read_(&(*node)->right, vars, buf, &right_dep);
@@ -190,7 +194,7 @@ static ErrorCode vars_read_(Variables* vars, char** buf)
         if (err) return err;
 
         int is_var = 0;
-        for (int i = 0; i < vars->count; i++) {
+        for (size_t i = 0; i < vars->count; i++) {
             if (strcmp(vars->var[i].name, str) == 0) {
                 if (vars->var[i].valid == 1) return ERROR_DUPLICATE_VAR;
 
@@ -276,7 +280,7 @@ static ErrorCode write_arg(TreeNode* node, Variables* vars, char* str, TreeDataT
 
     node->type_value = type_arg;
     if (type_arg == TYPE_OP) {
-        for (int i = 0; i < COUNT_OPs; i++) {
+        for (size_t i = 0; i < COUNT_OPs; i++) {
             if (strcmp(OPERATORS[i].name, str) == 0) {
                 node->value = OPERATORS[i].type_op;
                 break;
@@ -289,15 +293,15 @@ static ErrorCode write_arg(TreeNode* node, Variables* vars, char* str, TreeDataT
 
     if (type_arg == TYPE_VAR) {
         int was = 0;
-        for (int i = 0; i < vars->count; i++) {
+        for (size_t i = 0; i < vars->count; i++) {
             if (strcmp(vars->var[i].name, str) == 0) {
-                node->value = i;
+                node->value = (int)i;
                 was = 1;
                 break;
             }
         }
         if (!was) {
-            node->value = vars->count;
+            node->value = (int)vars->count;
             vars->var[vars->count].name = strdup(str);
             if (!vars->var[vars->count].name) return ERROR_STRDUP;
             vars->count++;
@@ -386,14 +390,14 @@ ErrorCode file_to_buf(const char* name_file, char** buf)
     FILE* data_file = fopen(name_file, "r");
     if (!data_file) return ERROR_OPEN_FILE;
 
-    int size_file = -1;
+    size_t size_file = (size_t)-1;
     err = fsize(name_file, &size_file);
     if (err) return err;
 
     *buf = (char *)calloc(size_file, sizeof(char));
     if (!(*buf)) return ERROR_ALLOC_FAIL;
 
-    int count_read = (int)fread(*buf, sizeof(char), size_file, data_file);
+    size_t count_read = fread(*buf, sizeof(char), size_file, data_file);
     if (count_read != size_file - 1) return ERROR_READ_FILE;
     (*buf)[size_file - 1] = '\0';
 
@@ -401,13 +405,13 @@ ErrorCode file_to_buf(const char* name_file, char** buf)
     return err;
 }
 
-static ErrorCode fsize(const char* name_file, int* size_file) 
+static ErrorCode fsize(const char* name_file, size_t* size_file) 
 {
     assert(name_file);
     struct stat st = {};
 
     if (stat(name_file, &st) == 0) {
-        (*size_file) = (int)st.st_size + 1;
+        (*size_file) = (size_t)st.st_size + 1;
         return ERROR_NO;
     }
 
@@ -418,13 +422,13 @@ static ErrorCode vars_increase_cap(Variables* vars)
 {
     assert(vars);
 
-    vars->capacity = (int)(vars->capacity * MULTIPLIER_CAPACITY);
+    vars->capacity = vars->capacity * MULTIPLIER_CAPACITY;
     vars->var = (Variable*)realloc(vars->var, vars->capacity * sizeof(Variable));
     if (!vars->var) return ERROR_ALLOC_FAIL;
 
-    for (int i = vars->count; i < vars->capacity; i++) {
+    for (size_t i = vars->count; i < vars->capacity; i++) {
         vars->var[i].valid = 0;
-        vars->var[i].value = POISON_VALUE;
+        vars->var[i].value = (int)POISON_VALUE;
     }
 
     return ERROR_NO;

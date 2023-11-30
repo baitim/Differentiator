@@ -50,7 +50,7 @@ ErrorCode tree_delete(Tree* tree)
     ErrorCode err = node_delete(tree->root);
     if (err) return err;
 
-    for (int i = 0; i < tree->variables->capacity; i++) {
+    for (size_t i = 0; i < tree->variables->capacity; i++) {
         free(tree->variables->var[i].name);
     }
     
@@ -93,7 +93,7 @@ ErrorCode tree_verify(TreeNode* node)
 
     ErrorCode err = ERROR_NO;
 
-    int count_nodes = (1 << node->depth);
+    size_t count_nodes = (1 << node->depth);
     int* color = (int*)calloc(count_nodes, sizeof(int));
     if (!color) return ERROR_ALLOC_FAIL;
 
@@ -116,7 +116,7 @@ static ErrorCode tree_verify_(TreeNode* node, int* color, int num)
 
     if (node->depth < 1) return ERROR_TREE_DEP;
 
-    int next_depth = 0;
+    size_t next_depth = 0;
     if (node->left)  next_depth = MAX(node->left->depth,  next_depth);
     if (node->right) next_depth = MAX(node->right->depth, next_depth);
     next_depth++;
