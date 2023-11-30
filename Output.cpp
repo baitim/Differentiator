@@ -1,5 +1,5 @@
 #include <assert.h>
-#include <cstdlib>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -13,6 +13,21 @@
 
 const int MAX_SIZE_NAME_DUMP = 100;
 const int MAX_SIZE_COMMAND = 500;
+const int MAX_SIZE_TEX_TXT_DATA = 200;
+
+static const char tex_txt_data[][MAX_SIZE_TEX_TXT_DATA] = {
+                                "Несложными преобразованиями получаем",
+                                "Nobody cares",
+                                "Даже советский батон преобразовал бы это",
+                                "Договоримся",
+                                "Выражение находится в кормушке, а значит",
+                                "Преобразования аналогичны, разобранным лекции",
+                                "Что вы от меня хотите? Если вы это не понимаете, вы дурак",
+                                "Итак",
+                                "Значит",
+                                "Таким образом",
+};
+const int COUNT_TEX_TXT_DATA = sizeof(tex_txt_data) / (MAX_SIZE_TEX_TXT_DATA * sizeof(char));
 
 static ErrorCode tree_write_points          (Tree* tree, int num_var, EvalPoints* graph, FILE* dump_file);
 static ErrorCode tree_cmd_dump_             (TreeNode* node, Variables* vars, int dep);
@@ -401,7 +416,8 @@ ErrorCode tree_tex_dump(Tree* tree)
     time_t mytime = time(NULL);
     struct tm *now = localtime(&mytime);
 
-    fprintf(dump_file, "\\documentclass[a4paper,3pt]{article}\n\n"
+    fprintf(dump_file, "\\documentclass[a4paper,3pt]{article}\n"
+                       "\\usepackage[T2A]{fontenc}\n\n"
                        "\\usepackage{amsmath}\n"
                        "\\DeclareMathOperator\\arcctan{arcctan}"
                        "\\author{Baidiusenov Timur}\n"
@@ -457,6 +473,8 @@ static ErrorCode tree_tex_dump_(TreeNode* node, Variables* vars, FILE* dump_file
     if (err) return err;
     if (node->right) err = tree_tex_dump_(node->right, vars, dump_file);
     if (err) return err;
+
+    fprintf(dump_file, "%s:\n", tex_txt_data[rand() % COUNT_TEX_TXT_DATA]);
 
     fprintf(dump_file, "\\begin{equation}\n\t");
     err = tree_equation_dump(node, vars, dump_file, BRANCH_ERR, TYPE_ERR, OP_ERR);

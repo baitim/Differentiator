@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "ANSI_colors.h"
 #include "Differentiation.h"
@@ -15,6 +16,7 @@ int main(int argc, const char *argv[])
     printf(print_lblue("# Implementation of Differentiator.\n"
                        "# (c) BAIDUSENOV TIMUR, 2023\n\n"));
 
+    srand(time(NULL));
     ErrorCode err = ERROR_NO;
     CmdInputData cmd_data = {};
     char* file_buffer = nullptr;
