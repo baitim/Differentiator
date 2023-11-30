@@ -351,10 +351,27 @@ ErrorCode div_simplify(TreeNode** node, int* is_change)
 
     ErrorCode err = ERROR_NO;
 
-    err = tree_simplify_(&(*node)->left, is_change);
-    if (err) return err;
-    err = tree_simplify_(&(*node)->right, is_change);
-    if (err) return err;
+    if (((*node)->left->type_value == TYPE_NUM && is_double_equal((*node)->left->value, 0))) {
+
+        (*is_change)++;
+        (*node)->depth =       1;
+        (*node)->type_value =  TYPE_NUM;
+        (*node)->value =       0;
+
+        for (TreeNode* np = (*node)->parent; np; np = np->parent) {
+            size_t depth = 0;
+            err = node_get_depth(np, &depth);
+            if (err) return err;
+            np->depth = depth;
+        }
+        
+        err = node_delete(&(*node)->left);
+        if (err) return err;
+        err = node_delete(&(*node)->right);
+        if (err) return err;
+
+        return ERROR_NO;
+    }
 
     return ERROR_NO;
 }
@@ -365,10 +382,135 @@ ErrorCode pow_simplify(TreeNode** node, int* is_change)
 
     ErrorCode err = ERROR_NO;
 
-    err = tree_simplify_(&(*node)->left, is_change);
-    if (err) return err;
-    err = tree_simplify_(&(*node)->right, is_change);
-    if (err) return err;
+    if ((*node)->left->type_value ==  TYPE_NUM && is_double_equal((*node)->left->value,   0) &&
+        (*node)->right->type_value == TYPE_NUM && !is_double_equal((*node)->right->value, 0)) {
+
+        (*is_change)++;
+        (*node)->depth =       1;
+        (*node)->type_value =  TYPE_NUM;
+        (*node)->value =       0;
+
+        for (TreeNode* np = (*node)->parent; np; np = np->parent) {
+            size_t depth = 0;
+            err = node_get_depth(np, &depth);
+            if (err) return err;
+            np->depth = depth;
+        }
+        
+        err = node_delete(&(*node)->left);
+        if (err) return err;
+        err = node_delete(&(*node)->right);
+        if (err) return err;
+
+        return ERROR_NO;
+    }
+
+    if ((*node)->left->type_value == TYPE_NUM && is_double_equal((*node)->left->value, 1)) {
+
+        (*is_change)++;
+        (*node)->depth =       1;
+        (*node)->type_value =  TYPE_NUM;
+        (*node)->value =       1;
+
+        for (TreeNode* np = (*node)->parent; np; np = np->parent) {
+            size_t depth = 0;
+            err = node_get_depth(np, &depth);
+            if (err) return err;
+            np->depth = depth;
+        }
+        
+        err = node_delete(&(*node)->left);
+        if (err) return err;
+        err = node_delete(&(*node)->right);
+        if (err) return err;
+
+        return ERROR_NO;
+    }
+
+    if (((*node)->right->type_value == TYPE_NUM && is_double_equal((*node)->right->value, 0)) &&
+        ((*node)->left->type_value ==  TYPE_NUM && !is_double_equal((*node)->left->value, 0))) {
+
+        (*is_change)++;
+        (*node)->depth =       1;
+        (*node)->type_value =  TYPE_NUM;
+        (*node)->value =       1;
+
+        for (TreeNode* np = (*node)->parent; np; np = np->parent) {
+            size_t depth = 0;
+            err = node_get_depth(np, &depth);
+            if (err) return err;
+            np->depth = depth;
+        }
+        
+        err = node_delete(&(*node)->left);
+        if (err) return err;
+        err = node_delete(&(*node)->right);
+        if (err) return err;
+
+        return ERROR_NO;
+    }
+
+    if ((*node)->right->type_value == TYPE_NUM && is_double_equal((*node)->right->value, 1)) {
+
+        (*is_change)++;
+        TreeNode* node_copy_left = nullptr;
+        err = node_copy((*node)->left, &node_copy_left);
+        if (err) return err;
+        TreeNode* node_parent = (*node)->parent;
+
+        err = node_delete(node);
+        if (err) return err;
+        err = node_copy(node_copy_left, node);
+        if (err) return err;
+        (*node)->parent = node_parent;
+
+        for (TreeNode* np = *node; np; np = np->parent) {
+            size_t depth = 0;
+            err = node_get_depth(np, &depth);
+            if (err) return err;
+            np->depth = depth;
+        }
+
+        err = node_delete(&node_copy_left);
+        if (err) return err;
+
+        return ERROR_NO;
+    }
+
+    if ((*node)->left->type_value == TYPE_NUM && is_double_equal((*node)->left->value, M_E) &&
+        (*node)->right->type_value == TYPE_OP && is_double_equal((*node)->right->value, OP_MUL) &&
+        (*node)->right->left && (*node)->right->left->type_value == TYPE_OP && 
+        is_double_equal((*node)->right->left->value, OP_LN)) {
+
+        (*is_change)++;
+        TreeNode* node_parent = (*node)->parent;
+
+        TreeNode* node_ln = nullptr;
+        err = node_copy((*node)->right->left->left, &node_ln);
+        if (err) return err;
+
+        TreeNode* node_degree = nullptr;
+        err = node_copy((*node)->right->right, &node_degree);
+        if (err) return err;
+
+        err = node_insert_op(node, OP_POW, node_ln, node_degree);
+        if (err) return err;
+        (*node)->parent = node_parent;
+
+        for (TreeNode* np = *node; np; np = np->parent) {
+            size_t depth = 0;
+            err = node_get_depth(np, &depth);
+            if (err) return err;
+            np->depth = depth;
+        }
+
+        err = node_delete(&node_ln);
+        if (err) return err;
+        err = node_delete(&node_degree);
+        if (err) return err;
+
+        return ERROR_NO;
+    }
 
     return ERROR_NO;
 }
@@ -379,10 +521,27 @@ ErrorCode log_simplify(TreeNode** node, int* is_change)
 
     ErrorCode err = ERROR_NO;
 
-    err = tree_simplify_(&(*node)->left, is_change);
-    if (err) return err;
-    err = tree_simplify_(&(*node)->right, is_change);
-    if (err) return err;
+    if ((*node)->right->type_value == TYPE_NUM && !is_double_equal((*node)->right->value, 1)) {
+
+        (*is_change)++;
+        (*node)->depth =       1;
+        (*node)->type_value =  TYPE_NUM;
+        (*node)->value =       0;
+
+        for (TreeNode* np = (*node)->parent; np; np = np->parent) {
+            size_t depth = 0;
+            err = node_get_depth(np, &depth);
+            if (err) return err;
+            np->depth = depth;
+        }
+        
+        err = node_delete(&(*node)->left);
+        if (err) return err;
+        err = node_delete(&(*node)->right);
+        if (err) return err;
+
+        return ERROR_NO;
+    }
 
     return ERROR_NO;
 }

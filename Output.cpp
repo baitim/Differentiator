@@ -401,7 +401,7 @@ ErrorCode tree_tex_dump(Tree* tree)
     time_t mytime = time(NULL);
     struct tm *now = localtime(&mytime);
 
-    fprintf(dump_file, "\\documentclass[a4paper,12pt]{article}\n\n"
+    fprintf(dump_file, "\\documentclass[a4paper,3pt]{article}\n\n"
                        "\\usepackage{amsmath}\n"
                        "\\DeclareMathOperator\\arcctan{arcctan}"
                        "\\author{Baidiusenov Timur}\n"
