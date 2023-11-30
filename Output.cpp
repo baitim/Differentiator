@@ -29,8 +29,13 @@ static ErrorCode make_name_file             (char* buffer, const char *type, cha
 
 ErrorCode print_help()
 {
-    for (int i = 0; i < COUNT_OPTIONS; i++)
-        printf(ANSI_LIGHT_GREEN "%s\t\t%s\n" ANSI_DEFAULT_COLOR, OPTIONS[i].name, OPTIONS[i].description);
+    for (int i = 0; i < COUNT_OPTIONS; i++) {
+        int count_print = 0;
+        printf(print_lgreen("%s%n"), OPTIONS[i].name, &count_print);
+        for (int j = 0; j <= MAX_CMD_COMMAND_SIZE - count_print; j++)
+            printf(" ");
+        printf(print_lgreen("%s\n"), OPTIONS[i].description);
+    }
     return ERROR_NO;
 }
 
@@ -153,8 +158,10 @@ static ErrorCode tree_write_points(Tree* tree, int num_var, EvalPoints* graph, F
     double* y = (double*)calloc(size, sizeof(double));
     if (!y) return ERROR_ALLOC_FAIL;
 
-    err = tree_get_points(tree, num_var, graph, x, y);
-    if (err) return err;
+    if (tree->variables->count > 0) {
+        err = tree_get_points(tree, num_var, graph, x, y);
+        if (err) return err;
+    }
 
     fprintf(dump_file, "x = [");
     for (size_t i = 0; i < size - 1; i++)
@@ -479,7 +486,10 @@ static ErrorCode tree_equation_dump(TreeNode* node, Variables* vars, FILE* dump_
                                        node->type_value, node_op);
 
     if (node->type_value == TYPE_NUM) {
-        fprintf(dump_file, "%.2lf", node->value);
+        if (is_double_less(node->value, 0))
+            fprintf(dump_file, "(%.2lf)", node->value);
+        else
+            fprintf(dump_file, "%.2lf", node->value);
     } else if (node->type_value == TYPE_OP) {
         switch ((int)node->value) {
             case (OP_ADD) : fprintf(dump_file, " + ");      break;
@@ -541,7 +551,7 @@ static ErrorCode write_left_parenthesis(TreeNode* node, FILE* dump_file, Branch 
             par_op == OP_ASIN || par_op == OP_ACOS || par_op == OP_ATG ||
             par_op == OP_ACTG || par_op == OP_SH   || par_op == OP_CH  ||
             par_op == OP_TH   || par_op == OP_CTH  || par_op == OP_SUB)
-            && OPERATORS[(int)node->value].ops_num > 1 && node->depth > 1)
+            && node->depth > 1)
             fprintf(dump_file, "(");
     }
 
@@ -561,7 +571,7 @@ static ErrorCode write_right_parenthesis(TreeNode* node, FILE* dump_file,
             par_op == OP_ASIN || par_op == OP_ACOS || par_op == OP_ATG ||
             par_op == OP_ACTG || par_op == OP_SH   || par_op == OP_CH  ||
             par_op == OP_TH   || par_op == OP_CTH  || par_op == OP_SUB)
-             && OPERATORS[(int)node->value].ops_num > 1 && node->depth > 1)
+            && node->depth > 1)
             fprintf(dump_file, ")");
 
         if (par_op == OP_DIV  || par_op == OP_POW  || par_op == OP_LOG || 

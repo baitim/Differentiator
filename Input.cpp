@@ -52,6 +52,11 @@ ErrorCode tree_get_num_var(Tree* tree, int* num_var)
     ErrorCode err = tree_verify(tree->root);
     if (err) return err;
 
+    if (tree->variables->count == 0) {
+        *num_var = 0;
+        return ERROR_NO;
+    }
+
     printf(print_lcyan("You can choose this variables:\n"));
     for (size_t i = 0; i < tree->variables->count; i++)
         printf(print_lcyan("\t· %s\n"), tree->variables->var[i].name);
@@ -129,7 +134,6 @@ static ErrorCode tree_read_(TreeNode** node, Variables* vars, char** buf, size_t
 {
     if (!node) return ERROR_INVALID_TREE; 
     if (!buf) return ERROR_INVALID_BUF;
-
     ErrorCode err = ERROR_NO;
 
     if ((**buf) == '(') {
@@ -221,8 +225,10 @@ static ErrorCode vars_read_(Variables* vars, char** buf)
     }
 
     vars->capacity = vars->count;
-    vars->var = (Variable*)realloc(vars->var, vars->capacity * sizeof(Variable));
-    if (!vars->var) return ERROR_ALLOC_FAIL;
+    if (vars->capacity > 0) {
+        vars->var = (Variable*)realloc(vars->var, vars->capacity * sizeof(Variable));
+        if (!vars->var) return ERROR_ALLOC_FAIL;
+    }
 
     return ERROR_NO;
 }

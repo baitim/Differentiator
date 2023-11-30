@@ -38,8 +38,8 @@ struct Operator {
     const char* name;
     OperatorType ops_num;
     ErrorCode (*eval)(double* eval_equation, double left_eval, double right_eval);
-    ErrorCode (*diff)(TreeNode* node, int num_var);
-    ErrorCode (*simp)(TreeNode* node, int* is_change, Branch branch);
+    ErrorCode (*diff)(TreeNode* node,  int num_var);
+    ErrorCode (*simp)(TreeNode** node, int* is_change);
 };
 
 ErrorCode err_eval      (double* eval_equation, double left_eval, double right_eval);
@@ -86,27 +86,27 @@ ErrorCode ch_diff       (TreeNode* node, int num_var);
 ErrorCode th_diff       (TreeNode* node, int num_var);
 ErrorCode cth_diff      (TreeNode* node, int num_var);
 
-ErrorCode err_simplify  (TreeNode* node, int* is_change, Branch /*branch*/);
-ErrorCode add_simplify  (TreeNode* node, int* is_change, Branch /*branch*/);
-ErrorCode sub_simplify  (TreeNode* node, int* is_change, Branch /*branch*/);
-ErrorCode mul_simplify  (TreeNode* node, int* is_change, Branch branch);
-ErrorCode div_simplify  (TreeNode* node, int* is_change, Branch /*branch*/);
-ErrorCode pow_simplify  (TreeNode* node, int* /*is_change*/, Branch /*branch*/);
-ErrorCode log_simplify  (TreeNode* node, int* /*is_change*/, Branch /*branch*/);
-ErrorCode ln_simplify   (TreeNode* node, int* /*is_change*/, Branch /*branch*/);
-ErrorCode sqrt_simplify (TreeNode* node, int* /*is_change*/, Branch /*branch*/);
-ErrorCode sin_simplify  (TreeNode* node, int* /*is_change*/, Branch /*branch*/);
-ErrorCode cos_simplify  (TreeNode* node, int* /*is_change*/, Branch /*branch*/);
-ErrorCode tg_simplify   (TreeNode* node, int* /*is_change*/, Branch /*branch*/);
-ErrorCode ctg_simplify  (TreeNode* node, int* /*is_change*/, Branch /*branch*/);
-ErrorCode asin_simplify (TreeNode* node, int* /*is_change*/, Branch /*branch*/);
-ErrorCode acos_simplify (TreeNode* node, int* /*is_change*/, Branch /*branch*/);
-ErrorCode atg_simplify  (TreeNode* node, int* /*is_change*/, Branch /*branch*/);
-ErrorCode actg_simplify (TreeNode* node, int* /*is_change*/, Branch /*branch*/);
-ErrorCode sh_simplify   (TreeNode* node, int* /*is_change*/, Branch /*branch*/);
-ErrorCode ch_simplify   (TreeNode* node, int* /*is_change*/, Branch /*branch*/);
-ErrorCode th_simplify   (TreeNode* node, int* /*is_change*/, Branch /*branch*/);
-ErrorCode cth_simplify  (TreeNode* node, int* /*is_change*/, Branch /*branch*/);
+ErrorCode err_simplify  (TreeNode** node, int* is_change);
+ErrorCode add_simplify  (TreeNode** node, int* is_change);
+ErrorCode sub_simplify  (TreeNode** node, int* is_change);
+ErrorCode mul_simplify  (TreeNode** node, int* is_change);
+ErrorCode div_simplify  (TreeNode** node, int* is_change);
+ErrorCode pow_simplify  (TreeNode** node, int* /*is_change*/);
+ErrorCode log_simplify  (TreeNode** node, int* /*is_change*/);
+ErrorCode ln_simplify   (TreeNode** node, int* /*is_change*/);
+ErrorCode sqrt_simplify (TreeNode** node, int* /*is_change*/);
+ErrorCode sin_simplify  (TreeNode** node, int* /*is_change*/);
+ErrorCode cos_simplify  (TreeNode** node, int* /*is_change*/);
+ErrorCode tg_simplify   (TreeNode** node, int* /*is_change*/);
+ErrorCode ctg_simplify  (TreeNode** node, int* /*is_change*/);
+ErrorCode asin_simplify (TreeNode** node, int* /*is_change*/);
+ErrorCode acos_simplify (TreeNode** node, int* /*is_change*/);
+ErrorCode atg_simplify  (TreeNode** node, int* /*is_change*/);
+ErrorCode actg_simplify (TreeNode** node, int* /*is_change*/);
+ErrorCode sh_simplify   (TreeNode** node, int* /*is_change*/);
+ErrorCode ch_simplify   (TreeNode** node, int* /*is_change*/);
+ErrorCode th_simplify   (TreeNode** node, int* /*is_change*/);
+ErrorCode cth_simplify  (TreeNode** node, int* /*is_change*/);
 
 const Operator OPERATORS[] = {
     {OP_ERR,    "$",        OP_TYPE_ERR,    err_eval,   err_diff,   err_simplify    },

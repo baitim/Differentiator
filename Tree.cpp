@@ -47,7 +47,7 @@ ErrorCode tree_delete(Tree* tree)
 {
     if (!tree) return ERROR_INVALID_TREE;
 
-    ErrorCode err = node_delete(tree->root);
+    ErrorCode err = node_delete(&tree->root);
     if (err) return err;
 
     for (size_t i = 0; i < tree->variables->capacity; i++) {

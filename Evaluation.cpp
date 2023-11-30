@@ -29,8 +29,7 @@ static ErrorCode tree_eval_(TreeNode* node, Variables* vars, double* eval_equati
     assert(vars);
     if (!node) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(node);
-    if (err) return err;
+    ErrorCode err = ERROR_NO;
 
     double left_eval =  -1;
     double right_eval = -1;
@@ -42,7 +41,7 @@ static ErrorCode tree_eval_(TreeNode* node, Variables* vars, double* eval_equati
     err = node_eval_(node, vars, eval_equation, left_eval, right_eval);
     if (err) return err;
 
-    return tree_verify(node);
+    return ERROR_NO;
 }
 
 static ErrorCode node_eval_(TreeNode* node, Variables* vars, double* eval_equation,

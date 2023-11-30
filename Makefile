@@ -17,7 +17,7 @@ OPTIONS = -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++\
 
 TREE_FILES = 	$(wildcard *.cpp)
 INCLUDE_FILES = $(wildcard *.h)
-DATA_FILE = 	--name_data_file equation2.txt
+DATA_FILE = 	--name_data_file equation1.txt
 
 build : tree run
 

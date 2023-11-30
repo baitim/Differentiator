@@ -25,3 +25,13 @@ int is_double_equal(double x, double y)
 {
     return (fabs(x - y) <= EPSILON);
 }
+
+int is_double_less(double x, double y)
+{
+    return (x - y <= EPSILON);
+}
+
+int is_double_above(double x, double y)
+{
+    return (y - x <= EPSILON);
+}

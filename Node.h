@@ -32,7 +32,7 @@ struct TreeNode {
 
 ErrorCode node_init     (TreeNode** node);
 ErrorCode node_init_num (TreeNode** node, double value);
-ErrorCode node_delete   (TreeNode* node);
+ErrorCode node_delete   (TreeNode** node);
 ErrorCode node_copy     (TreeNode* node, TreeNode** new_node);
 ErrorCode node_insert_op(TreeNode** dest, TypeOperator operator_, 
                          TreeNode* left, TreeNode* right);

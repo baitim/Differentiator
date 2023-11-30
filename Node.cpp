@@ -38,24 +38,24 @@ ErrorCode node_init_num(TreeNode** node, double value)
     return ERROR_NO;
 }
 
-ErrorCode node_delete(TreeNode* node) 
+ErrorCode node_delete(TreeNode** node) 
 {
-    if (!node) return ERROR_INVALID_TREE;
+    if (!node)  return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(node);
-    if (err) return err;
+    ErrorCode err = ERROR_NO;
 
-    if (node->left)  err = node_delete(node->left);
+    if ((*node)->left)  err = node_delete(&(*node)->left);
     if (err) return err;
-    if (node->right) err = node_delete(node->right);
+    if ((*node)->right) err = node_delete(&(*node)->right);
     if (err) return err;
     
-    node->depth =   POISON_VALUE;
-    node->left =    nullptr;
-    node->right =   nullptr;
-    node->parent =  nullptr;
+    (*node)->depth =   POISON_VALUE;
+    (*node)->left =    nullptr;
+    (*node)->right =   nullptr;
+    (*node)->parent =  nullptr;
 
-    free(node);
+    free(*node);
+    *node = nullptr;
     return ERROR_NO;
 }
 
@@ -93,9 +93,9 @@ ErrorCode node_insert_op(TreeNode** dest, TypeOperator operator_,
     if (!(*dest)) err = node_init(dest);
     if (err) return err;
 
-    if ((*dest)->left) err =  node_delete((*dest)->left);
+    if ((*dest)->left) err =  node_delete(&(*dest)->left);
     if (err) return err;
-    if ((*dest)->right) err = node_delete((*dest)->right);
+    if ((*dest)->right) err = node_delete(&(*dest)->right);
     if (err) return err;
 
     (*dest)->type_value =  TYPE_OP;

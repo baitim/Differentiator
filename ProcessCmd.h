@@ -3,7 +3,7 @@
 
 #include "Errors.h"
 
-const int MAX_CMD_COMMAND_SIZE = 200;
+const int MAX_CMD_COMMAND_SIZE = 30;
 
 struct CmdInputData {
     int is_data_file;
