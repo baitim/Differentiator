@@ -2,8 +2,8 @@
 #define SIMPLIFICATION
 
 #include "Errors.h"
-#include "Tree.h"
+#include "Equation.h"
 
-ErrorCode tree_simplify(Tree* tree);
+ErrorCode equation_simplify(Equation* equation);
 
 #endif // SIMPLIFICATION

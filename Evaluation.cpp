@@ -7,24 +7,24 @@
 #include "Input.h"
 #include "Math.h"
 
-static ErrorCode tree_eval_ (TreeNode* node, Variables* vars, double* eval_equation);
-static ErrorCode node_eval_ (TreeNode* node, Variables* vars, double* eval_equation,
+static ErrorCode equation_eval_ (EquationNode* node, Variables* vars, double* eval_equation);
+static ErrorCode node_eval_ (EquationNode* node, Variables* vars, double* eval_equation,
                              double left_eval, double right_eval);
-static ErrorCode op_eval    (TreeNode* node, double* eval_equation, double left_eval, double right_eval);
+static ErrorCode op_eval    (EquationNode* node, double* eval_equation, double left_eval, double right_eval);
 
-ErrorCode tree_eval(Tree* tree, double* eval_equation)
+ErrorCode equation_eval(Equation* equation, double* eval_equation)
 {
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!equation) return ERROR_INVALID_TREE;
 
     ErrorCode err = ERROR_NO;
 
-    err = tree_eval_(tree->root, tree->variables, eval_equation);
+    err = equation_eval_(equation->root, equation->variables, eval_equation);
     if (err) return err;
 
     return ERROR_NO;
 }
 
-static ErrorCode tree_eval_(TreeNode* node, Variables* vars, double* eval_equation)
+static ErrorCode equation_eval_(EquationNode* node, Variables* vars, double* eval_equation)
 {
     assert(vars);
     if (!node) return ERROR_INVALID_TREE;
@@ -33,9 +33,9 @@ static ErrorCode tree_eval_(TreeNode* node, Variables* vars, double* eval_equati
 
     double left_eval =  -1;
     double right_eval = -1;
-    if (node->left)  err = tree_eval_(node->left,  vars, &left_eval );
+    if (node->left)  err = equation_eval_(node->left,  vars, &left_eval );
     if (err) return err;
-    if (node->right) err = tree_eval_(node->right, vars, &right_eval);
+    if (node->right) err = equation_eval_(node->right, vars, &right_eval);
     if (err) return err;
 
     err = node_eval_(node, vars, eval_equation, left_eval, right_eval);
@@ -44,7 +44,7 @@ static ErrorCode tree_eval_(TreeNode* node, Variables* vars, double* eval_equati
     return ERROR_NO;
 }
 
-static ErrorCode node_eval_(TreeNode* node, Variables* vars, double* eval_equation,
+static ErrorCode node_eval_(EquationNode* node, Variables* vars, double* eval_equation,
                             double left_eval, double right_eval)
 {
     assert(node);
@@ -62,7 +62,7 @@ static ErrorCode node_eval_(TreeNode* node, Variables* vars, double* eval_equati
     return ERROR_NO;
 }
 
-static ErrorCode op_eval(TreeNode* node, double* eval_equation, double left_eval, double right_eval)
+static ErrorCode op_eval(EquationNode* node, double* eval_equation, double left_eval, double right_eval)
 {
     assert(node);
 
@@ -72,27 +72,27 @@ static ErrorCode op_eval(TreeNode* node, double* eval_equation, double left_eval
     return ERROR_NO;
 }
 
-ErrorCode tree_get_points(Tree* tree, int num_var, EvalPoints* graph, double* x, double* y)
+ErrorCode equation_get_points(Equation* equation, int num_var, EvalPoints* graph, double* x, double* y)
 {
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!equation) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(tree->root);
+    ErrorCode err = equation_verify(equation->root);
     if (err) return err;
 
-    Tree* new_tree = nullptr;
-    err = tree_copy(tree, "TreeGetPoints", &new_tree);
+    Equation* new_equation = nullptr;
+    err = equation_copy(equation, "EquationGetPoints", &new_equation);
     if (err) return err;
 
     int max_ind = (int)((graph->right_border - graph->left_border) / graph->step_values) + 1;
 
     double old_value_var = 0;
-    if (tree->variables->var[num_var].valid) old_value_var = tree->variables->var[num_var].value;
+    if (equation->variables->var[num_var].valid) old_value_var = equation->variables->var[num_var].value;
     for (int i = 0; i < max_ind; i++) {
         double x_value = i * graph->step_values + graph->left_border;
-        new_tree->variables->var[num_var].value = x_value;
+        new_equation->variables->var[num_var].value = x_value;
         x[i] = x_value;
         double y_value = 0;
-        err = tree_eval(new_tree, &y_value);
+        err = equation_eval(new_equation, &y_value);
         if (err) return err;
         double new_y = clamp_double(y_value, graph->min_value, graph->max_value);
         if (!is_double_equal(y_value, new_y))
@@ -100,12 +100,12 @@ ErrorCode tree_get_points(Tree* tree, int num_var, EvalPoints* graph, double* x,
         else 
             y[i] = new_y;
     }
-    if (tree->variables->var[num_var].valid) tree->variables->var[num_var].value = old_value_var;
+    if (equation->variables->var[num_var].valid) equation->variables->var[num_var].value = old_value_var;
 
-    err = tree_delete(new_tree);
+    err = equation_delete(new_equation);
     if (err) return err;
 
-    return tree_verify(tree->root);
+    return equation_verify(equation->root);
 }
 
 ErrorCode err_eval(double* eval_equation, double left_eval, double right_eval)

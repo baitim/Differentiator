@@ -2,13 +2,13 @@
 #define INPUT_H
 
 #include "Errors.h"
-#include "Tree.h"
+#include "Equation.h"
 
 static const int MAX_SIZE_INPUT = 500;
 
-ErrorCode tree_get_val_vars (Tree* tree);
-ErrorCode tree_get_num_var  (Tree* tree, int* num_var);
-ErrorCode tree_read         (Tree* tree, char** buf);
+ErrorCode equation_get_val_vars (Equation* equation);
+ErrorCode equation_get_num_var  (Equation* equation, int* num_var);
+ErrorCode equation_read         (Equation* equation, char** buf);
 ErrorCode file_to_buf       (const char* name_file, char** buf);
 ErrorCode get_var           (Variables* vars, size_t number_var);
 ErrorCode clean_stdin       ();

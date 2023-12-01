@@ -2,7 +2,7 @@
 #define EVAL_H
 
 #include "Errors.h"
-#include "Tree.h"
+#include "Equation.h"
 
 struct EvalPoints {
     const double left_border;
@@ -12,7 +12,7 @@ struct EvalPoints {
     const double step_values;
 };
 
-ErrorCode tree_eval         (Tree* tree, double* ans_eval);
-ErrorCode tree_get_points   (Tree* tree, int num_var, EvalPoints* graph, double* x, double* y);
+ErrorCode equation_eval         (Equation* equation, double* ans_eval);
+ErrorCode equation_get_points   (Equation* equation, int num_var, EvalPoints* graph, double* x, double* y);
 
 #endif // EVAL_H

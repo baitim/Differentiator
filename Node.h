@@ -11,33 +11,33 @@ enum Branch {
     BRANCH_RIGHT = 1,
 };
 
-enum TreeDataType {
+enum EquationDataType {
     TYPE_ERR = -1,
     TYPE_NUM =  1,
     TYPE_OP  =  2,
     TYPE_VAR =  3,
 };
 
-struct TreeNode {
-    TreeDataType type_value;
+struct EquationNode {
+    EquationDataType type_value;
     double value;
     size_t depth;
-    TreeNode* left;
-    TreeNode* right;
-    TreeNode* parent;
+    EquationNode* left;
+    EquationNode* right;
+    EquationNode* parent;
 };
 
 #include "Operators.h"
 #include "Variables.h"
 
-ErrorCode node_init     (TreeNode** node);
-ErrorCode node_init_num (TreeNode** node, double value);
-ErrorCode node_delete   (TreeNode** node);
-ErrorCode node_copy     (TreeNode* node, TreeNode** new_node);
-ErrorCode node_insert_op(TreeNode** dest, TypeOperator operator_, 
-                         TreeNode* left, TreeNode* right);
-ErrorCode node_get_depth(TreeNode* node, size_t* depth);
+ErrorCode node_init     (EquationNode** node);
+ErrorCode node_init_num (EquationNode** node, double value);
+ErrorCode node_delete   (EquationNode** node);
+ErrorCode node_copy     (EquationNode* node, EquationNode** new_node);
+ErrorCode node_insert_op(EquationNode** dest, TypeOperator operator_, 
+                         EquationNode* left, EquationNode* right);
+ErrorCode node_get_depth(EquationNode* node, size_t* depth);
 
-#include "Tree.h"
+#include "Equation.h"
 
 #endif // NODE_H

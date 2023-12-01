@@ -29,17 +29,17 @@ static const char tex_txt_data[][MAX_SIZE_TEX_TXT_DATA] = {
 };
 const int COUNT_TEX_TXT_DATA = sizeof(tex_txt_data) / (MAX_SIZE_TEX_TXT_DATA * sizeof(char));
 
-static ErrorCode tree_write_points          (Tree* tree, int num_var, EvalPoints* graph, FILE* dump_file);
-static ErrorCode tree_cmd_dump_             (TreeNode* node, Variables* vars, int dep);
-static ErrorCode tree_svg_dump_make_node    (TreeNode* node, Variables* vars, FILE* dump_file);
-static ErrorCode tree_svg_dump_make_edge    (TreeNode* node, FILE* dump_file);
-static ErrorCode tree_tex_dump_             (TreeNode* node, Variables* vars, FILE* dump_file);
-static ErrorCode tree_equation_dump         (TreeNode* node, Variables* vars, FILE* dump_file,
-                                             Branch branch, TreeDataType par_type, TypeOperator par_op);
-static ErrorCode write_left_parenthesis     (TreeNode* node, FILE* dump_file, Branch branch,
-                                             TreeDataType par_type, TypeOperator par_op);
-static ErrorCode write_right_parenthesis    (TreeNode* node, FILE* dump_file,
-                                             TreeDataType par_type, TypeOperator par_op);
+static ErrorCode equation_write_points          (Equation* equation, int num_var, EvalPoints* graph, FILE* dump_file);
+static ErrorCode equation_cmd_dump_             (EquationNode* node, Variables* vars, int dep);
+static ErrorCode equation_svg_dump_make_node    (EquationNode* node, Variables* vars, FILE* dump_file);
+static ErrorCode equation_svg_dump_make_edge    (EquationNode* node, FILE* dump_file);
+static ErrorCode equation_tex_dump_             (EquationNode* node, Variables* vars, FILE* dump_file);
+static ErrorCode equation_equation_dump         (EquationNode* node, Variables* vars, FILE* dump_file,
+                                             Branch branch, EquationDataType par_type, TypeOperator par_op);
+static ErrorCode write_left_parenthesis     (EquationNode* node, FILE* dump_file, Branch branch,
+                                             EquationDataType par_type, TypeOperator par_op);
+static ErrorCode write_right_parenthesis    (EquationNode* node, FILE* dump_file,
+                                             EquationDataType par_type, TypeOperator par_op);
 static ErrorCode make_name_file             (char* buffer, const char *type, char** name_dump_file);
 
 ErrorCode print_help()
@@ -54,13 +54,13 @@ ErrorCode print_help()
     return ERROR_NO;
 }
 
-ErrorCode prepare_dump_dir(Tree* tree)
+ErrorCode prepare_dump_dir(Equation* equation)
 {
     char command[MAX_SIZE_COMMAND] = "";
-    snprintf(command, MAX_SIZE_COMMAND, "mkdir %s", tree->name);
+    snprintf(command, MAX_SIZE_COMMAND, "mkdir %s", equation->name);
     int sys = system(command);
 
-    snprintf(command, MAX_SIZE_COMMAND, "rm -r %s/*", tree->name);
+    snprintf(command, MAX_SIZE_COMMAND, "rm -r %s/*", equation->name);
     sys = system(command);
 
     snprintf(command, MAX_SIZE_COMMAND, "mkdir %s/py ; "
@@ -70,49 +70,49 @@ ErrorCode prepare_dump_dir(Tree* tree)
                                         "mkdir %s/html ;"
                                         "mkdir %s/tex ;"
                                         "mkdir %s/pdf ;",
-                                        tree->name, tree->name, tree->name, 
-                                        tree->name, tree->name, tree->name,
-                                        tree->name);
+                                        equation->name, equation->name, equation->name, 
+                                        equation->name, equation->name, equation->name,
+                                        equation->name);
     sys = system(command);
     if (sys) return ERROR_SYSTEM_COMMAND;
 
     return ERROR_NO;
 }
 
-ErrorCode tree_big_dump(Tree* tree, int num_var)
+ErrorCode equation_big_dump(Equation* equation, int num_var)
 {
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!equation) return ERROR_INVALID_TREE;
 
     ErrorCode err = ERROR_NO;
 
-    err = tree_cmd_dump(tree);
+    err = equation_cmd_dump(equation);
     if (err) return err;
 
-    err = tree_svg_dump(tree);
+    err = equation_svg_dump(equation);
     if (err) return err;
 
-    err = tree_tex_dump(tree);
+    err = equation_tex_dump(equation);
     if (err) return err;
 
-    err = tree_graph_dump(tree, num_var);
+    err = equation_graph_dump(equation, num_var);
     if (err) return err;
 
-    err = tree_html_dump(tree);
+    err = equation_html_dump(equation);
     if (err) return err;
 
     return ERROR_NO;
 }
 
-ErrorCode tree_graph_dump(Tree* tree, int num_var)
+ErrorCode equation_graph_dump(Equation* equation, int num_var)
 {
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!equation) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(tree->root);
+    ErrorCode err = equation_verify(equation->root);
     if (err) return err;
 
     char py_path[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(py_path, MAX_SIZE_NAME_DUMP, "%s/py/%s%zu", tree->name, tree->name, 
-                                           tree->output_info->number_graph_dump);
+    snprintf(py_path, MAX_SIZE_NAME_DUMP, "%s/py/%s%zu", equation->name, equation->name, 
+                                           equation->output_info->number_graph_dump);
 
     char *name_py_file = nullptr;
     err = make_name_file(py_path, ".py", &name_py_file);
@@ -124,14 +124,14 @@ ErrorCode tree_graph_dump(Tree* tree, int num_var)
     }
 
     char graph_path[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(graph_path, MAX_SIZE_NAME_DUMP, "%s/graph/%s%zu", tree->name, tree->name, 
-                                              tree->output_info->number_graph_dump);
+    snprintf(graph_path, MAX_SIZE_NAME_DUMP, "%s/graph/%s%zu", equation->name, equation->name, 
+                                              equation->output_info->number_graph_dump);
 
     EvalPoints graph = {-5, 20, 20, -5, 0.05f};
 
     fprintf(dump_file,  "import matplotlib.pyplot as plt\n");
 
-    err = tree_write_points(tree, num_var, &graph, dump_file);
+    err = equation_write_points(equation, num_var, &graph, dump_file);
     if (err) return err;
 
     fprintf(dump_file, "plt.plot(x, y)\n");
@@ -153,18 +153,18 @@ ErrorCode tree_graph_dump(Tree* tree, int num_var)
 
     free(name_py_file);
     free(name_graph_file);
-    tree->output_info->number_graph_dump++;
-    return tree_verify(tree->root);
+    equation->output_info->number_graph_dump++;
+    return equation_verify(equation->root);
 }
 
-static ErrorCode tree_write_points(Tree* tree, int num_var, EvalPoints* graph, FILE* dump_file)
+static ErrorCode equation_write_points(Equation* equation, int num_var, EvalPoints* graph, FILE* dump_file)
 {
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!equation) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(tree->root);
+    ErrorCode err = equation_verify(equation->root);
     if (err) return err;
 
-    if (graph->right_border < graph->left_border) return tree_verify(tree->root);
+    if (graph->right_border < graph->left_border) return equation_verify(equation->root);
 
     size_t size = (size_t)((graph->right_border - graph->left_border) / graph->step_values) + 1;
 
@@ -173,8 +173,8 @@ static ErrorCode tree_write_points(Tree* tree, int num_var, EvalPoints* graph, F
     double* y = (double*)calloc(size, sizeof(double));
     if (!y) return ERROR_ALLOC_FAIL;
 
-    if (tree->variables->count > 0) {
-        err = tree_get_points(tree, num_var, graph, x, y);
+    if (equation->variables->count > 0) {
+        err = equation_get_points(equation, num_var, graph, x, y);
         if (err) return err;
     }
 
@@ -196,34 +196,34 @@ static ErrorCode tree_write_points(Tree* tree, int num_var, EvalPoints* graph, F
 
     free(x);
     free(y);
-    return tree_verify(tree->root);
+    return equation_verify(equation->root);
 }
 
-ErrorCode tree_cmd_dump(Tree* tree)
+ErrorCode equation_cmd_dump(Equation* equation)
 {
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!equation) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(tree->root);
+    ErrorCode err = equation_verify(equation->root);
     if (err) return err;
 
     fprintf(stderr, print_lmagenta("^^^^^^^^^^^^^^^^^^^^\n\n"));
-    fprintf(stderr, print_lmagenta("Tree: %s\n"), tree->name);
+    fprintf(stderr, print_lmagenta("Equation: %s\n"), equation->name);
 
-    tree_cmd_dump_(tree->root, tree->variables, 0);
+    equation_cmd_dump_(equation->root, equation->variables, 0);
 
     fprintf(stderr, print_lmagenta("vvvvvvvvvvvvvvvvvvvv\n\n"));
 
-    return tree_verify(tree->root);
+    return equation_verify(equation->root);
 }
 
-static ErrorCode tree_cmd_dump_(TreeNode* node, Variables* vars, int dep)
+static ErrorCode equation_cmd_dump_(EquationNode* node, Variables* vars, int dep)
 {
     if (!node) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(node);
+    ErrorCode err = equation_verify(node);
     if (err) return err;
 
-    if (node->left) tree_cmd_dump_(node->left, vars, dep + 1);
+    if (node->left) equation_cmd_dump_(node->left, vars, dep + 1);
 
     for (int i = 0; i < dep; i++) fprintf(stderr, "\t");
     if (node->type_value == TYPE_NUM) {
@@ -241,21 +241,21 @@ static ErrorCode tree_cmd_dump_(TreeNode* node, Variables* vars, int dep)
             fprintf(stderr, print_lgreen("%s\n"), vars->var[(int)node->value].name);
     }
 
-    if (node->right) tree_cmd_dump_(node->right, vars, dep + 1);
+    if (node->right) equation_cmd_dump_(node->right, vars, dep + 1);
 
-    return tree_verify(node);
+    return equation_verify(node);
 }
 
-ErrorCode tree_svg_dump(Tree* tree)
+ErrorCode equation_svg_dump(Equation* equation)
 {
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!equation) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(tree->root);
+    ErrorCode err = equation_verify(equation->root);
     if (err) return err;
 
     char dot_path[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(dot_path, MAX_SIZE_NAME_DUMP, "%s/dot/%s%zu", tree->name, tree->name, 
-                                            tree->output_info->number_svg_dump);
+    snprintf(dot_path, MAX_SIZE_NAME_DUMP, "%s/dot/%s%zu", equation->name, equation->name, 
+                                            equation->output_info->number_svg_dump);
 
     char *name_dot_file = nullptr;
     err = make_name_file(dot_path, ".dot", &name_dot_file);
@@ -274,20 +274,20 @@ ErrorCode tree_svg_dump(Tree* tree)
                        "\tedge[minlen = 3.5, arrowsize = 2.5, penwidth = 4];\n"
                        "\tnode[shape = \"rectangle\", style = \"rounded, filled\", height = 3, width = 2, "
                        "fillcolor = \"#ab5b0f\", width = 3, fontsize = 30, penwidth = 3.5, color = \"#941b1b\"]\n",
-                        tree->name);
+                        equation->name);
 
-    err = tree_svg_dump_make_node(tree->root, tree->variables, dump_file);
+    err = equation_svg_dump_make_node(equation->root, equation->variables, dump_file);
     if (err) return err;
 
-    err = tree_svg_dump_make_edge(tree->root, dump_file);
+    err = equation_svg_dump_make_edge(equation->root, dump_file);
     if (err) return err;
 
     fprintf(dump_file, "}\n");
     fclose(dump_file);
 
     char svg_path[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(svg_path, MAX_SIZE_NAME_DUMP, "%s/svg/%s%zu", tree->name, tree->name, 
-                                            tree->output_info->number_svg_dump);
+    snprintf(svg_path, MAX_SIZE_NAME_DUMP, "%s/svg/%s%zu", equation->name, equation->name, 
+                                            equation->output_info->number_svg_dump);
 
     char *name_svg_file = nullptr;
     err = make_name_file(svg_path, ".svg", &name_svg_file);
@@ -298,20 +298,20 @@ ErrorCode tree_svg_dump(Tree* tree)
     int sys = system(command);
     if (sys) return ERROR_SYSTEM_COMMAND;
 
-    tree->output_info->number_svg_dump++;
+    equation->output_info->number_svg_dump++;
     free(name_dot_file);
     free(name_svg_file);
-    return tree_verify(tree->root);
+    return equation_verify(equation->root);
 }
 
-static ErrorCode tree_svg_dump_make_node(TreeNode* node, Variables* vars, FILE* dump_file)
+static ErrorCode equation_svg_dump_make_node(EquationNode* node, Variables* vars, FILE* dump_file)
 {
     if (!node) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(node);
+    ErrorCode err = equation_verify(node);
     if (err) return err;
 
-    if (node->left) tree_svg_dump_make_node(node->left, vars, dump_file);
+    if (node->left) equation_svg_dump_make_node(node->left, vars, dump_file);
 
     fprintf(dump_file, "\t{ \n"
                        "\t\tnode[shape = \"Mrecord\"];\n"
@@ -336,38 +336,38 @@ static ErrorCode tree_svg_dump_make_node(TreeNode* node, Variables* vars, FILE* 
     }
     fprintf(dump_file, "\t}\n");
 
-    if (node->right) tree_svg_dump_make_node(node->right, vars, dump_file);
+    if (node->right) equation_svg_dump_make_node(node->right, vars, dump_file);
 
-    return tree_verify(node);
+    return equation_verify(node);
 }
 
-static ErrorCode tree_svg_dump_make_edge(TreeNode* node, FILE* dump_file)
+static ErrorCode equation_svg_dump_make_edge(EquationNode* node, FILE* dump_file)
 {
     if (!node) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(node);
+    ErrorCode err = equation_verify(node);
     if (err) return err;
 
-    if (node->left)  tree_svg_dump_make_edge(node->left, dump_file);
+    if (node->left)  equation_svg_dump_make_edge(node->left, dump_file);
     if (node->left)  fprintf(dump_file, "\tnode%p->node%p[color = yellow, labelangle = 45];\n", node, node->left);
     if (node->right) fprintf(dump_file, "\tnode%p->node%p[color = yellow, labelangle = 45];\n", node, node->right);
-    if (node->right) tree_svg_dump_make_edge(node->right, dump_file);
+    if (node->right) equation_svg_dump_make_edge(node->right, dump_file);
 
     if (node->parent) fprintf(dump_file, "\tnode%p->node%p[color = \"#b6ff1a\", labelangle = 45];\n", node, node->parent);
 
-    return tree_verify(node);
+    return equation_verify(node);
 }
 
-ErrorCode tree_html_dump(Tree* tree)
+ErrorCode equation_html_dump(Equation* equation)
 {
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!equation) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(tree->root);
+    ErrorCode err = equation_verify(equation->root);
     if (err) return err;
 
     char buffer[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(buffer, MAX_SIZE_NAME_DUMP, "%s/html/%s%zu.html", tree->name, tree->name, 
-                                          tree->output_info->number_html_dump);
+    snprintf(buffer, MAX_SIZE_NAME_DUMP, "%s/html/%s%zu.html", equation->name, equation->name, 
+                                          equation->output_info->number_html_dump);
 
     FILE* html_file = fopen(buffer, "w");
     if (!html_file) {
@@ -377,28 +377,28 @@ ErrorCode tree_html_dump(Tree* tree)
 
     fprintf(html_file, "<pre>\n");
 
-    for (size_t i = 1; i < tree->output_info->number_svg_dump; i++) {
-        fprintf(html_file, "<img src = \"../svg/%s%zu.svg\">\n", tree->name, i);
+    for (size_t i = 1; i < equation->output_info->number_svg_dump; i++) {
+        fprintf(html_file, "<img src = \"../svg/%s%zu.svg\">\n", equation->name, i);
     }
 
     fprintf(html_file, "</pre>\n");
 
-    tree->output_info->number_html_dump++;
+    equation->output_info->number_html_dump++;
 
     fclose(html_file);
-    return tree_verify(tree->root);
+    return equation_verify(equation->root);
 }
 
-ErrorCode tree_tex_dump(Tree* tree)
+ErrorCode equation_tex_dump(Equation* equation)
 {
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!equation) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(tree->root);
+    ErrorCode err = equation_verify(equation->root);
     if (err) return err;
 
     char tex_path[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(tex_path, MAX_SIZE_NAME_DUMP, "%s/tex/%s%zu", tree->name, tree->name, 
-                                            tree->output_info->number_tex_dump);
+    snprintf(tex_path, MAX_SIZE_NAME_DUMP, "%s/tex/%s%zu", equation->name, equation->name, 
+                                            equation->output_info->number_tex_dump);
 
     char *name_tex_file = nullptr;
     err = make_name_file(tex_path, ".tex", &name_tex_file);
@@ -410,7 +410,7 @@ ErrorCode tree_tex_dump(Tree* tree)
         return ERROR_SYSTEM_COMMAND;
     }
 
-    err = tree_verify(tree->root);
+    err = equation_verify(equation->root);
     if (err) return err;
 
     time_t mytime = time(NULL);
@@ -425,19 +425,19 @@ ErrorCode tree_tex_dump(Tree* tree)
                        "\\date{Date: %d.%d.%d, Time %d:%d:%d}\n"
                        "\\begin{document}\n"
                        "\\maketitle\n",
-                       tree->name,
+                       equation->name,
                        now->tm_mday, now->tm_mon + 1, now->tm_year + 1900,
                        now->tm_hour, now->tm_min, now->tm_sec);
 
-    err = tree_tex_dump_(tree->root, tree->variables, dump_file);
+    err = equation_tex_dump_(equation->root, equation->variables, dump_file);
     if (err) return err;
 
     fprintf(dump_file, "\\end{document}\n");
     fclose(dump_file);
 
     char pdf_path[MAX_SIZE_NAME_DUMP] = "";
-    snprintf(pdf_path, MAX_SIZE_NAME_DUMP, "%s/pdf/%s%zu", tree->name, tree->name, 
-                                            tree->output_info->number_tex_dump);
+    snprintf(pdf_path, MAX_SIZE_NAME_DUMP, "%s/pdf/%s%zu", equation->name, equation->name, 
+                                            equation->output_info->number_tex_dump);
 
     char *name_aux_file = nullptr;
     err = make_name_file(pdf_path, ".aux", &name_aux_file);
@@ -449,19 +449,19 @@ ErrorCode tree_tex_dump(Tree* tree)
     char command[MAX_SIZE_COMMAND] = "";
     snprintf(command, MAX_SIZE_COMMAND, "pdflatex -output-directory=%s/pdf %s ; "
                                         "rm %s ; rm %s", 
-                                        tree->name, name_tex_file, 
+                                        equation->name, name_tex_file, 
                                         name_aux_file, name_tex_log_file);
     int sys = system(command);
     if (sys) return ERROR_SYSTEM_COMMAND;
 
-    tree->output_info->number_tex_dump++;
+    equation->output_info->number_tex_dump++;
     free(name_tex_file);
     free(name_aux_file);
     free(name_tex_log_file);
-    return tree_verify(tree->root);
+    return equation_verify(equation->root);
 }
 
-static ErrorCode tree_tex_dump_(TreeNode* node, Variables* vars, FILE* dump_file)
+static ErrorCode equation_tex_dump_(EquationNode* node, Variables* vars, FILE* dump_file)
 {
     assert(node);
     assert(vars);
@@ -469,27 +469,27 @@ static ErrorCode tree_tex_dump_(TreeNode* node, Variables* vars, FILE* dump_file
 
     ErrorCode err = ERROR_NO;
 
-    if (node->left) err =  tree_tex_dump_(node->left,  vars, dump_file);
+    if (node->left) err =  equation_tex_dump_(node->left,  vars, dump_file);
     if (err) return err;
-    if (node->right) err = tree_tex_dump_(node->right, vars, dump_file);
+    if (node->right) err = equation_tex_dump_(node->right, vars, dump_file);
     if (err) return err;
 
     fprintf(dump_file, "%s:\n", tex_txt_data[rand() % COUNT_TEX_TXT_DATA]);
 
     fprintf(dump_file, "\\begin{equation}\n\t");
-    err = tree_equation_dump(node, vars, dump_file, BRANCH_ERR, TYPE_ERR, OP_ERR);
+    err = equation_equation_dump(node, vars, dump_file, BRANCH_ERR, TYPE_ERR, OP_ERR);
     if (err) return err;
     fprintf(dump_file, "\n\\end{equation}\n");
 
     return ERROR_NO;
 }
 
-static ErrorCode tree_equation_dump(TreeNode* node, Variables* vars, FILE* dump_file,
-                                    Branch branch, TreeDataType par_type, TypeOperator par_op)
+static ErrorCode equation_equation_dump(EquationNode* node, Variables* vars, FILE* dump_file,
+                                    Branch branch, EquationDataType par_type, TypeOperator par_op)
 {
     if (!node) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(node);
+    ErrorCode err = equation_verify(node);
     if (err) return err;
 
     TypeOperator node_op = OP_ERR;
@@ -500,8 +500,8 @@ static ErrorCode tree_equation_dump(TreeNode* node, Variables* vars, FILE* dump_
                                  par_type, par_op);
     if (err) return err;
 
-    if (node->left) tree_equation_dump(node->left, vars, dump_file, BRANCH_LEFT, 
-                                       node->type_value, node_op);
+    if (node->left) equation_equation_dump(node->left, vars, dump_file, BRANCH_LEFT, 
+                                        node->type_value, node_op);
 
     if (node->type_value == TYPE_NUM) {
         if (is_double_less(node->value, 0))
@@ -526,18 +526,18 @@ static ErrorCode tree_equation_dump(TreeNode* node, Variables* vars, FILE* dump_
         fprintf(dump_file, "%s", vars->var[(int)node->value].name);
     }
 
-    if (node->right) tree_equation_dump(node->right, vars, dump_file, BRANCH_RIGHT, 
-                                        node->type_value, node_op);
+    if (node->right) equation_equation_dump(node->right, vars, dump_file, BRANCH_RIGHT, 
+                                            node->type_value, node_op);
 
     err = write_right_parenthesis(node, dump_file, 
                                   par_type, par_op);
     if (err) return err;
 
-    return tree_verify(node);
+    return equation_verify(node);
 }
 
-static ErrorCode write_left_parenthesis(TreeNode* node, FILE* dump_file, Branch branch,
-                                        TreeDataType par_type, TypeOperator par_op)
+static ErrorCode write_left_parenthesis(EquationNode* node, FILE* dump_file, Branch branch,
+                                        EquationDataType par_type, TypeOperator par_op)
 {
     assert(node);
     assert(dump_file);
@@ -576,8 +576,8 @@ static ErrorCode write_left_parenthesis(TreeNode* node, FILE* dump_file, Branch 
     return ERROR_NO;
 }
 
-static ErrorCode write_right_parenthesis(TreeNode* node, FILE* dump_file,
-                                         TreeDataType par_type, TypeOperator par_op)
+static ErrorCode write_right_parenthesis(EquationNode* node, FILE* dump_file,
+                                         EquationDataType par_type, TypeOperator par_op)
 {
     assert(node);
     assert(dump_file);

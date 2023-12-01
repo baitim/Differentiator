@@ -10,12 +10,12 @@
 #include "Input.h"
 #include "Math.h"
 
-static ErrorCode tree_read_     (TreeNode** node, Variables* vars, char** buf, size_t *dep);
+static ErrorCode equation_read_     (EquationNode** node, Variables* vars, char** buf, size_t *dep);
 static ErrorCode vars_read_     (Variables* vars, char** buf);
 static ErrorCode fsize          (const char* name_file, size_t* size_file);
 static ErrorCode get_arg        (char** buf, char* str);
-static ErrorCode check_type_arg (char* str, TreeDataType* type_arg);
-static ErrorCode write_arg      (TreeNode* node, Variables* vars, char* str, TreeDataType type_arg);
+static ErrorCode check_type_arg (char* str, EquationDataType* type_arg);
+static ErrorCode write_arg      (EquationNode* node, Variables* vars, char* str, EquationDataType type_arg);
 static ErrorCode is_operator    (char* str, int* is_oper);
 static ErrorCode is_number      (char* str, int* is_num);
 static ErrorCode is_variable    (char* str, int* is_var);
@@ -23,43 +23,43 @@ static char* skip_spaces        (char* ass);
 static char* skip_word          (char* sus);
 static ErrorCode vars_increase_cap(Variables* vars);
 
-ErrorCode tree_get_val_vars(Tree* tree)
+ErrorCode equation_get_val_vars(Equation* equation)
 {
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!equation) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(tree->root);
+    ErrorCode err = equation_verify(equation->root);
     if (err) return err;
 
-    for (size_t i = 0; i < tree->variables->count; i++) {
-        if (!tree->variables->var[i].valid) {
+    for (size_t i = 0; i < equation->variables->count; i++) {
+        if (!equation->variables->var[i].valid) {
             printf(print_lcyan("You should input variables:\n"));
             break;
         }
     }
                 
-    for (size_t i = 0; i < tree->variables->count; i++)
-        get_var(tree->variables, i);
+    for (size_t i = 0; i < equation->variables->count; i++)
+        get_var(equation->variables, i);
 
     printf(print_lcyan("All variables have value\n"));
 
-    return tree_verify(tree->root);
+    return equation_verify(equation->root);
 }
 
-ErrorCode tree_get_num_var(Tree* tree, int* num_var)
+ErrorCode equation_get_num_var(Equation* equation, int* num_var)
 {
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!equation) return ERROR_INVALID_TREE;
 
-    ErrorCode err = tree_verify(tree->root);
+    ErrorCode err = equation_verify(equation->root);
     if (err) return err;
 
-    if (tree->variables->count == 0) {
+    if (equation->variables->count == 0) {
         *num_var = 0;
         return ERROR_NO;
     }
 
     printf(print_lcyan("You can choose this variables:\n"));
-    for (size_t i = 0; i < tree->variables->count; i++)
-        printf(print_lcyan("\t· %s\n"), tree->variables->var[i].name);
+    for (size_t i = 0; i < equation->variables->count; i++)
+        printf(print_lcyan("\t· %s\n"), equation->variables->var[i].name);
 
     char name_var[MAX_SIZE_VAR] = "";
     while (1) {
@@ -72,8 +72,8 @@ ErrorCode tree_get_num_var(Tree* tree, int* num_var)
         }
 
         int exist = 0;
-        for (size_t i = 0; i < tree->variables->count; i++) {
-            if (strcmp(tree->variables->var[i].name, name_var) == 0) {
+        for (size_t i = 0; i < equation->variables->count; i++) {
+            if (strcmp(equation->variables->var[i].name, name_var) == 0) {
                 *num_var = (int)i;
                 exist = 1;
             }
@@ -85,19 +85,19 @@ ErrorCode tree_get_num_var(Tree* tree, int* num_var)
         printf(print_lred("Wrong argument, you should input name of existing variable\n"));
     }
 
-    return tree_verify(tree->root);
+    return equation_verify(equation->root);
 }
 
-ErrorCode tree_read(Tree* tree, char** buf)
+ErrorCode equation_read(Equation* equation, char** buf)
 {
     assert(buf);
-    if (!tree) return ERROR_INVALID_TREE;
+    if (!equation) return ERROR_INVALID_TREE;
 
     size_t dep = 0;
-    ErrorCode err = tree_read_(&tree->root, tree->variables, buf, &dep);
+    ErrorCode err = equation_read_(&equation->root, equation->variables, buf, &dep);
     if (err) return err;
 
-    err = vars_read_(tree->variables, buf);
+    err = vars_read_(equation->variables, buf);
     if (err) return err;
 
     return ERROR_NO;
@@ -130,7 +130,7 @@ ErrorCode clean_stdin()
     return ERROR_NO;
 }
 
-static ErrorCode tree_read_(TreeNode** node, Variables* vars, char** buf, size_t *dep)
+static ErrorCode equation_read_(EquationNode** node, Variables* vars, char** buf, size_t *dep)
 {
     if (!node) return ERROR_INVALID_TREE; 
     if (!buf) return ERROR_INVALID_BUF;
@@ -144,7 +144,7 @@ static ErrorCode tree_read_(TreeNode** node, Variables* vars, char** buf, size_t
 
         *buf = skip_spaces(*buf);
         size_t left_dep = 0;
-        err = tree_read_(&(*node)->left, vars, buf, &left_dep);
+        err = equation_read_(&(*node)->left, vars, buf, &left_dep);
         if (err) return err;
         *buf = skip_spaces(*buf);
         /////////////////////////////////////////////////////////
@@ -152,7 +152,7 @@ static ErrorCode tree_read_(TreeNode** node, Variables* vars, char** buf, size_t
         err = get_arg(buf, str);
         if (err) return err;
 
-        TreeDataType type_arg = TYPE_ERR;
+        EquationDataType type_arg = TYPE_ERR;
         err = check_type_arg(str, &type_arg);
         if (err || type_arg == TYPE_ERR) return err;
 
@@ -163,7 +163,7 @@ static ErrorCode tree_read_(TreeNode** node, Variables* vars, char** buf, size_t
         size_t right_dep = 0;
         *buf = skip_spaces(*buf);
         if (!(type_arg == TYPE_OP && OPERATORS[(int)(*node)->value].ops_num == 1)) {
-            err = tree_read_(&(*node)->right, vars, buf, &right_dep);
+            err = equation_read_(&(*node)->right, vars, buf, &right_dep);
             if (err) return err;
         } else {
             *buf = skip_word(*buf); 
@@ -250,7 +250,7 @@ static ErrorCode get_arg(char** buf, char* str)
     return ERROR_NO;
 }
 
-static ErrorCode check_type_arg(char* str, TreeDataType* type_arg)
+static ErrorCode check_type_arg(char* str, EquationDataType* type_arg)
 {
     assert(str);
     ErrorCode err = ERROR_NO;
@@ -280,7 +280,7 @@ static ErrorCode check_type_arg(char* str, TreeDataType* type_arg)
     return ERROR_INPUT_VARIABLE;
 }
 
-static ErrorCode write_arg(TreeNode* node, Variables* vars, char* str, TreeDataType type_arg)
+static ErrorCode write_arg(EquationNode* node, Variables* vars, char* str, EquationDataType type_arg)
 {
     ErrorCode err = ERROR_NO;
 

@@ -2,8 +2,8 @@
 #define DIFF_H
 
 #include "Errors.h"
-#include "Tree.h"
+#include "Equation.h"
 
-ErrorCode tree_diff(Tree* tree, int num_var);
+ErrorCode equation_diff(Equation* equation, int num_var);
 
 #endif // DIFF_H

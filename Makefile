@@ -19,10 +19,10 @@ TREE_FILES = 	$(wildcard *.cpp)
 INCLUDE_FILES = $(wildcard *.h)
 DATA_FILE = 	--name_data_file equation1.txt
 
-build : tree run
+build : equation run
 
-tree : $(TREE_FILES) $(INCLUDE_FILES)
-	g++ $(TREE_FILES) -o tree $(OPTIONS)
+equation : $(TREE_FILES) $(INCLUDE_FILES)
+	g++ $(TREE_FILES) -o equation $(OPTIONS)
 
 run :
-	./tree $(DATA_FILE)
+	./equation $(DATA_FILE)

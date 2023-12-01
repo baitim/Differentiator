@@ -4,11 +4,11 @@
 #include "Math.h"
 #include "Node.h"
 
-ErrorCode node_init(TreeNode** node)
+ErrorCode node_init(EquationNode** node)
 {
     assert(node);
     
-    *node = (TreeNode*)calloc(1, sizeof(TreeNode));
+    *node = (EquationNode*)calloc(1, sizeof(EquationNode));
     if (!*node) return ERROR_ALLOC_FAIL;
 
     (*node)->type_value =   TYPE_ERR;
@@ -21,11 +21,11 @@ ErrorCode node_init(TreeNode** node)
     return ERROR_NO;
 }
 
-ErrorCode node_init_num(TreeNode** node, double value)
+ErrorCode node_init_num(EquationNode** node, double value)
 {
     assert(node);
     
-    *node = (TreeNode*)calloc(1, sizeof(TreeNode));
+    *node = (EquationNode*)calloc(1, sizeof(EquationNode));
     if (!*node) return ERROR_ALLOC_FAIL;
 
     (*node)->type_value =   TYPE_NUM;
@@ -38,7 +38,7 @@ ErrorCode node_init_num(TreeNode** node, double value)
     return ERROR_NO;
 }
 
-ErrorCode node_delete(TreeNode** node) 
+ErrorCode node_delete(EquationNode** node) 
 {
     if (!node)  return ERROR_INVALID_TREE;
 
@@ -59,7 +59,7 @@ ErrorCode node_delete(TreeNode** node)
     return ERROR_NO;
 }
 
-ErrorCode node_copy(TreeNode* node, TreeNode** new_node)
+ErrorCode node_copy(EquationNode* node, EquationNode** new_node)
 {
     assert(node);
     
@@ -84,8 +84,8 @@ ErrorCode node_copy(TreeNode* node, TreeNode** new_node)
     return ERROR_NO;
 }
 
-ErrorCode node_insert_op(TreeNode** dest, TypeOperator operator_, 
-                         TreeNode* left, TreeNode* right)
+ErrorCode node_insert_op(EquationNode** dest, TypeOperator operator_, 
+                         EquationNode* left, EquationNode* right)
 {   
     assert(dest);
     ErrorCode err = ERROR_NO;
@@ -120,7 +120,7 @@ ErrorCode node_insert_op(TreeNode** dest, TypeOperator operator_,
     return ERROR_NO;
 }
 
-ErrorCode node_get_depth(TreeNode* node, size_t* depth)
+ErrorCode node_get_depth(EquationNode* node, size_t* depth)
 {
     assert(node);
 

@@ -9,7 +9,7 @@
 #include "Output.h"
 #include "ProcessCmd.h"
 #include "Simplification.h"
-#include "Tree.h"
+#include "Equation.h"
 
 int main(int argc, const char *argv[])
 {
@@ -22,11 +22,11 @@ int main(int argc, const char *argv[])
     char* file_buffer = nullptr;
     char* start_file_buffer = nullptr;
     double eval_equation = -1;
-    Tree* tree = nullptr;
-    Tree* tree_simple = nullptr;
-    Tree* tree_for_eval = nullptr;
-    Tree* tree_for_diff = nullptr;
-    Tree* tree_for_diff_simple = nullptr;
+    Equation* equation = nullptr;
+    Equation* equation_simple = nullptr;
+    Equation* equation_for_eval = nullptr;
+    Equation* equation_for_diff = nullptr;
+    Equation* equation_for_diff_simple = nullptr;
     int num_dump_var = 0;
     int num_diff_var = 0;
 
@@ -43,73 +43,73 @@ int main(int argc, const char *argv[])
         goto error;
     }
 
-    err = tree_new(&tree, "MainTree");
+    err = equation_new(&equation, "MainEquation");
     if (err) goto error;
 
     err = file_to_buf(cmd_data.name_data_file, &file_buffer);
     if (err) goto error;
 
     start_file_buffer = file_buffer;
-    err = tree_read(tree, &file_buffer);
+    err = equation_read(equation, &file_buffer);
     if (err) goto error;
 
-    err = prepare_dump_dir(tree);
+    err = prepare_dump_dir(equation);
     if (err) goto error;
-    err = tree_get_num_var(tree, &num_dump_var);
+    err = equation_get_num_var(equation, &num_dump_var);
     if (err) goto error;
-    err = tree_get_val_vars(tree);
+    err = equation_get_val_vars(equation);
     if (err) goto error;
-    err = tree_big_dump(tree, num_dump_var);
+    err = equation_big_dump(equation, num_dump_var);
     if (err) goto error;
 
-    err = tree_copy(tree, "TreeEval", &tree_for_eval);
+    err = equation_copy(equation, "EquationEval", &equation_for_eval);
     if (err) goto error;
-    err = tree_get_val_vars(tree_for_eval);
+    err = equation_get_val_vars(equation_for_eval);
     if (err) goto error;
-    err = tree_eval(tree_for_eval, &eval_equation);
+    err = equation_eval(equation_for_eval, &eval_equation);
     if (err) goto error;
     printf(print_lcyan("eval_equation = %lf\n"), eval_equation);
 
-    err = tree_copy(tree, "TreeDiff", &tree_for_diff);
+    err = equation_copy(equation, "EquationDiff", &equation_for_diff);
     if (err) goto error;
-    err = tree_get_num_var(tree_for_diff, &num_diff_var);
+    err = equation_get_num_var(equation_for_diff, &num_diff_var);
     if (err) goto error;
-    err = tree_diff(tree_for_diff, num_diff_var);
-    if (err) goto error;
-
-    err = prepare_dump_dir(tree_for_diff);
-    if (err) goto error;
-    err = tree_get_num_var(tree_for_diff, &num_dump_var);
-    if (err) goto error;
-    err = tree_get_val_vars(tree_for_diff);
-    if (err) goto error;
-    err = tree_big_dump(tree_for_diff, num_dump_var);
+    err = equation_diff(equation_for_diff, num_diff_var);
     if (err) goto error;
 
-    err = tree_copy(tree, "TreeSimple", &tree_simple);
+    err = prepare_dump_dir(equation_for_diff);
     if (err) goto error;
-    err = tree_simplify(tree_simple);
+    err = equation_get_num_var(equation_for_diff, &num_dump_var);
     if (err) goto error;
-    err = tree_get_num_var(tree_simple, &num_dump_var);
+    err = equation_get_val_vars(equation_for_diff);
     if (err) goto error;
-    err = tree_get_val_vars(tree_simple);
-    if (err) goto error;
-    err = prepare_dump_dir(tree_simple);
-    if (err) goto error;
-    err = tree_big_dump(tree_simple, num_dump_var);
+    err = equation_big_dump(equation_for_diff, num_dump_var);
     if (err) goto error;
 
-    err = tree_copy(tree_for_diff, "TreeDiffSimple", &tree_for_diff_simple);
+    err = equation_copy(equation, "EquationSimple", &equation_simple);
     if (err) goto error;
-    err = tree_simplify(tree_for_diff_simple);
+    err = equation_simplify(equation_simple);
     if (err) goto error;
-    err = tree_get_num_var(tree_for_diff_simple, &num_dump_var);
+    err = equation_get_num_var(equation_simple, &num_dump_var);
     if (err) goto error;
-    err = tree_get_val_vars(tree_for_diff_simple);
+    err = equation_get_val_vars(equation_simple);
     if (err) goto error;
-    err = prepare_dump_dir(tree_for_diff_simple);
+    err = prepare_dump_dir(equation_simple);
     if (err) goto error;
-    err = tree_big_dump(tree_for_diff_simple, num_dump_var);
+    err = equation_big_dump(equation_simple, num_dump_var);
+    if (err) goto error;
+
+    err = equation_copy(equation_for_diff, "EquationDiffSimple", &equation_for_diff_simple);
+    if (err) goto error;
+    err = equation_simplify(equation_for_diff_simple);
+    if (err) goto error;
+    err = equation_get_num_var(equation_for_diff_simple, &num_dump_var);
+    if (err) goto error;
+    err = equation_get_val_vars(equation_for_diff_simple);
+    if (err) goto error;
+    err = prepare_dump_dir(equation_for_diff_simple);
+    if (err) goto error;
+    err = equation_big_dump(equation_for_diff_simple, num_dump_var);
     if (err) goto error;
 
     printf(print_lblue("\nBye\n"));
@@ -121,11 +121,11 @@ error:
 
 finally:
     free(start_file_buffer);
-    tree_delete(tree);
-    tree_delete(tree_simple);
-    tree_delete(tree_for_eval);
-    tree_delete(tree_for_diff);
-    tree_delete(tree_for_diff_simple);
+    equation_delete(equation);
+    equation_delete(equation_simple);
+    equation_delete(equation_for_eval);
+    equation_delete(equation_for_diff);
+    equation_delete(equation_for_diff_simple);
     cmd_data_delete(&cmd_data);
 
     return err;

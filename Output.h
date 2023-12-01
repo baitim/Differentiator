@@ -2,7 +2,7 @@
 #define DUMP_H
 
 #include "Errors.h"
-#include "Tree.h"
+#include "Equation.h"
 
 struct OutputInfo {
     size_t number_graph_dump;
@@ -11,13 +11,13 @@ struct OutputInfo {
     size_t number_html_dump;
 };
 
-ErrorCode print_help        ();
-ErrorCode prepare_dump_dir  (Tree* tree);
-ErrorCode tree_big_dump     (Tree* tree, int num_var);
-ErrorCode tree_graph_dump   (Tree* tree, int num_var);
-ErrorCode tree_cmd_dump     (Tree* tree);
-ErrorCode tree_svg_dump     (Tree* tree);
-ErrorCode tree_html_dump    (Tree* tree);
-ErrorCode tree_tex_dump     (Tree* tree);
+ErrorCode print_help            ();
+ErrorCode prepare_dump_dir      (Equation* equation);
+ErrorCode equation_big_dump     (Equation* equation, int num_var);
+ErrorCode equation_graph_dump   (Equation* equation, int num_var);
+ErrorCode equation_cmd_dump     (Equation* equation);
+ErrorCode equation_svg_dump     (Equation* equation);
+ErrorCode equation_html_dump    (Equation* equation);
+ErrorCode equation_tex_dump     (Equation* equation);
 
 #endif // DUMP_H

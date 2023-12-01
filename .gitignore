@@ -1,7 +1,6 @@
-tree
 /.vscode
-MainTree
-TreeDiff
-TreeDiffSimple
-TreeSimple
+MainEquation
+EquationDiff
+EquationDiffSimple
+EquationSimple
 equation*
