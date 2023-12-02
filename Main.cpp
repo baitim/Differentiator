@@ -74,11 +74,11 @@ int main(int argc, const char *argv[])
     if (err) goto error;
     err = equation_get_num_var(equation_for_diff, &num_diff_var);
     if (err) goto error;
-    err = equation_diff(equation_for_diff, num_diff_var);
-    if (err) goto error;
-
     err = prepare_dump_dir(equation_for_diff);
     if (err) goto error;
+    err = equation_diff_report(equation_for_diff, num_diff_var);
+    if (err) goto error;
+
     err = equation_get_num_var(equation_for_diff, &num_dump_var);
     if (err) goto error;
     err = equation_get_val_vars(equation_for_diff);

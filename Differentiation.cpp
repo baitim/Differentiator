@@ -1,16 +1,19 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "ANSI_colors.h"
 #include "Differentiation.h"
 #include "Input.h"
 #include "Math.h"
+#include "Output.h"
 
-static ErrorCode equation_diff_     (EquationNode* node, int num_var);
-static ErrorCode node_diff      (EquationNode* node, int num_var);
-static ErrorCode var_diff       (EquationNode* node, int num_var);
-static ErrorCode op_diff        (EquationNode* node, int num_var);
+static ErrorCode equation_diff_         (EquationNode* node, int num_var);
+static ErrorCode equation_diff_report_  (Equation* equation, int num_var, FILE* dump_file);
+static ErrorCode node_diff              (EquationNode* node, int num_var);
+static ErrorCode var_diff               (EquationNode* node, int num_var);
+static ErrorCode op_diff                (EquationNode* node, int num_var);
 
 ErrorCode equation_diff(Equation* equation, int num_var)
 {
@@ -21,6 +24,78 @@ ErrorCode equation_diff(Equation* equation, int num_var)
     err = equation_diff_(equation->root, num_var);
     if (err) return err;
 
+    return ERROR_NO;
+}
+
+ErrorCode equation_diff_report(Equation* equation, int num_var)
+{
+    if (!equation) return ERROR_INVALID_TREE;
+
+    ErrorCode err = equation_verify(equation->root);
+    if (err) return err;
+
+    char tex_path[MAX_SIZE_NAME_DUMP] = "";
+    snprintf(tex_path, MAX_SIZE_NAME_DUMP, "%s/tex/%s%zu", equation->name, equation->name, 
+                                            equation->output_info->number_tex_dump);
+
+    char *name_tex_file = nullptr;
+    err = make_name_file(tex_path, ".tex", &name_tex_file);
+    if (err) return err;
+
+    FILE* dump_file = fopen(name_tex_file, "w");
+    if (!dump_file) {
+        fprintf(stderr, "Error open file to dump\n");
+        return ERROR_SYSTEM_COMMAND;
+    }
+
+    err = equation_verify(equation->root);
+    if (err) return err;
+
+    time_t mytime = time(NULL);
+    struct tm *now = localtime(&mytime);
+
+    fprintf(dump_file, "\\documentclass[a4paper,3pt]{article}\n"
+                       "\\usepackage[T2A]{fontenc}\n\n"
+                       "\\usepackage{amsmath}\n"
+                       "\\DeclareMathOperator\\arcctan{arcctan}"
+                       "\\author{Baidiusenov Timur}\n"
+                       "\\title{%s}\n"
+                       "\\date{Date: %d.%d.%d, Time %d:%d:%d}\n"
+                       "\\begin{document}\n"
+                       "\\maketitle\n",
+                       equation->name,
+                       now->tm_mday, now->tm_mon + 1, now->tm_year + 1900,
+                       now->tm_hour, now->tm_min, now->tm_sec);
+
+    err = equation_diff_report_(equation, num_var, dump_file);
+    if (err) return err;
+
+    fprintf(dump_file, "\\end{document}\n");
+    fclose(dump_file);
+
+    char pdf_path[MAX_SIZE_NAME_DUMP] = "";
+    snprintf(pdf_path, MAX_SIZE_NAME_DUMP, "%s/pdf/%s%zu", equation->name, equation->name, 
+                                            equation->output_info->number_tex_dump);
+
+    char *name_aux_file = nullptr;
+    err = make_name_file(pdf_path, ".aux", &name_aux_file);
+    if (err) return err;
+    char *name_tex_log_file = nullptr;
+    err = make_name_file(pdf_path, ".log", &name_tex_log_file);
+    if (err) return err;
+
+    char command[MAX_SIZE_COMMAND] = "";
+    snprintf(command, MAX_SIZE_COMMAND, "pdflatex -output-directory=%s/pdf %s ; "
+                                        "rm %s ; rm %s", 
+                                        equation->name, name_tex_file, 
+                                        name_aux_file, name_tex_log_file);
+    int sys = system(command);
+    if (sys) return ERROR_SYSTEM_COMMAND;
+
+    equation->output_info->number_tex_dump++;
+    free(name_tex_file);
+    free(name_aux_file);
+    free(name_tex_log_file);
     return ERROR_NO;
 }
 
@@ -35,6 +110,32 @@ static ErrorCode equation_diff_(EquationNode* node, int num_var)
     if (err) return err;
 
     return equation_verify(node);
+}
+
+static ErrorCode equation_diff_report_(Equation* equation, int num_var, FILE* dump_file)
+{
+    if (!equation) return ERROR_INVALID_TREE;
+
+    ErrorCode err = ERROR_NO;
+
+    fprintf(dump_file, "\\begin{equation}\n\t(");
+    err = equation_node_dump_(equation->root, equation->variables, dump_file, 
+                              BRANCH_ERR, TYPE_ERR, OP_ERR);
+    if (err) return err;
+    fprintf(dump_file, ")` \n\\end{equation}\n");
+
+    err = node_diff(equation->root, num_var);
+    if (err) return err;
+
+    fprintf(dump_file, "%s:\n", tex_txt_data[rand() % COUNT_TEX_TXT_DATA]);
+
+    fprintf(dump_file, "\\begin{equation}\n\t");
+    err = equation_node_dump_(equation->root, equation->variables, dump_file, 
+                              BRANCH_ERR, TYPE_ERR, OP_ERR);
+    if (err) return err;
+    fprintf(dump_file, "\n\\end{equation}\n");
+
+    return ERROR_NO;
 }
 
 static ErrorCode node_diff(EquationNode* node, int num_var)

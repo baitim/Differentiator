@@ -11,36 +11,15 @@
 #include "Output.h"
 #include "ProcessCmd.h"
 
-const int MAX_SIZE_NAME_DUMP = 100;
-const int MAX_SIZE_COMMAND = 500;
-const int MAX_SIZE_TEX_TXT_DATA = 200;
-
-static const char tex_txt_data[][MAX_SIZE_TEX_TXT_DATA] = {
-                                "Несложными преобразованиями получаем",
-                                "Nobody cares",
-                                "Даже советский батон преобразовал бы это",
-                                "Договоримся",
-                                "Выражение находится в кормушке, а значит",
-                                "Преобразования аналогичны, разобранным лекции",
-                                "Что вы от меня хотите? Если вы это не понимаете, вы дурак",
-                                "Итак",
-                                "Значит",
-                                "Таким образом",
-};
-const int COUNT_TEX_TXT_DATA = sizeof(tex_txt_data) / (MAX_SIZE_TEX_TXT_DATA * sizeof(char));
-
 static ErrorCode equation_write_points          (Equation* equation, int num_var, EvalPoints* graph, FILE* dump_file);
 static ErrorCode equation_cmd_dump_             (EquationNode* node, Variables* vars, int dep);
 static ErrorCode equation_svg_dump_make_node    (EquationNode* node, Variables* vars, FILE* dump_file);
 static ErrorCode equation_svg_dump_make_edge    (EquationNode* node, FILE* dump_file);
 static ErrorCode equation_tex_dump_             (EquationNode* node, Variables* vars, FILE* dump_file);
-static ErrorCode equation_equation_dump         (EquationNode* node, Variables* vars, FILE* dump_file,
-                                             Branch branch, EquationDataType par_type, TypeOperator par_op);
-static ErrorCode write_left_parenthesis     (EquationNode* node, FILE* dump_file, Branch branch,
-                                             EquationDataType par_type, TypeOperator par_op);
-static ErrorCode write_right_parenthesis    (EquationNode* node, FILE* dump_file,
-                                             EquationDataType par_type, TypeOperator par_op);
-static ErrorCode make_name_file             (char* buffer, const char *type, char** name_dump_file);
+static ErrorCode write_left_parenthesis         (EquationNode* node, FILE* dump_file, Branch branch,
+                                                 EquationDataType par_type, TypeOperator par_op);
+static ErrorCode write_right_parenthesis        (EquationNode* node, FILE* dump_file,
+                                                 EquationDataType par_type, TypeOperator par_op);
 
 ErrorCode print_help()
 {
@@ -477,15 +456,15 @@ static ErrorCode equation_tex_dump_(EquationNode* node, Variables* vars, FILE* d
     fprintf(dump_file, "%s:\n", tex_txt_data[rand() % COUNT_TEX_TXT_DATA]);
 
     fprintf(dump_file, "\\begin{equation}\n\t");
-    err = equation_equation_dump(node, vars, dump_file, BRANCH_ERR, TYPE_ERR, OP_ERR);
+    err = equation_node_dump_(node, vars, dump_file, BRANCH_ERR, TYPE_ERR, OP_ERR);
     if (err) return err;
     fprintf(dump_file, "\n\\end{equation}\n");
 
     return ERROR_NO;
 }
 
-static ErrorCode equation_equation_dump(EquationNode* node, Variables* vars, FILE* dump_file,
-                                    Branch branch, EquationDataType par_type, TypeOperator par_op)
+ErrorCode equation_node_dump_(EquationNode* node, Variables* vars, FILE* dump_file,
+                              Branch branch, EquationDataType par_type, TypeOperator par_op)
 {
     if (!node) return ERROR_INVALID_TREE;
 
@@ -500,7 +479,7 @@ static ErrorCode equation_equation_dump(EquationNode* node, Variables* vars, FIL
                                  par_type, par_op);
     if (err) return err;
 
-    if (node->left) equation_equation_dump(node->left, vars, dump_file, BRANCH_LEFT, 
+    if (node->left) equation_node_dump_(node->left, vars, dump_file, BRANCH_LEFT, 
                                         node->type_value, node_op);
 
     if (node->type_value == TYPE_NUM) {
@@ -526,8 +505,8 @@ static ErrorCode equation_equation_dump(EquationNode* node, Variables* vars, FIL
         fprintf(dump_file, "%s", vars->var[(int)node->value].name);
     }
 
-    if (node->right) equation_equation_dump(node->right, vars, dump_file, BRANCH_RIGHT, 
-                                            node->type_value, node_op);
+    if (node->right) equation_node_dump_(node->right, vars, dump_file, BRANCH_RIGHT, 
+                                         node->type_value, node_op);
 
     err = write_right_parenthesis(node, dump_file, 
                                   par_type, par_op);
@@ -604,7 +583,7 @@ static ErrorCode write_right_parenthesis(EquationNode* node, FILE* dump_file,
     return ERROR_NO;
 }
 
-static ErrorCode make_name_file(char* buffer, const char *type, char** name_dump_file)
+ErrorCode make_name_file(char* buffer, const char *type, char** name_dump_file)
 {
     size_t len_buf = strlen(buffer);
     size_t len_type = strlen(type);
