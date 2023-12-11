@@ -19,8 +19,7 @@ int main(int argc, const char *argv[])
     srand(time(NULL));
     ErrorCode err = ERROR_NO;
     CmdInputData cmd_data = {};
-    char* file_buffer = nullptr;
-    char* start_file_buffer = nullptr;
+    InputData* input_data = nullptr;
     double eval_equation = -1;
     Equation* equation = nullptr;
     Equation* equation_simple = nullptr;
@@ -46,11 +45,10 @@ int main(int argc, const char *argv[])
     err = equation_new(&equation, "MainEquation");
     if (err) goto error;
 
-    err = file_to_buf(cmd_data.name_data_file, &file_buffer);
+    err = input_data_ctor(&input_data, cmd_data.name_data_file);
     if (err) goto error;
 
-    start_file_buffer = file_buffer;
-    err = equation_read(equation, &file_buffer);
+    err = equation_read(equation, input_data);
     if (err) goto error;
 
     err = prepare_dump_dir(equation);
@@ -120,7 +118,7 @@ error:
     err_dump(err);
 
 finally:
-    free(start_file_buffer);
+    input_data_dtor(&input_data);
     equation_delete(equation);
     equation_delete(equation_simple);
     equation_delete(equation_for_eval);
