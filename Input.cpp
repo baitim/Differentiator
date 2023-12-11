@@ -21,10 +21,11 @@ static void skip_spaces_buf         (InputData* input_data);
 static char* skip_word              (char* str);
 static ErrorCode vars_increase_cap  (Variables* vars);
 static ErrorCode get_number         (InputData* input_data, EquationNode** node);
-static ErrorCode get_primary        (InputData* input_data, EquationNode** node);
-static ErrorCode get_pow            (InputData* input_data, EquationNode** node);
-static ErrorCode get_mul            (InputData* input_data, EquationNode** node);
-static ErrorCode get_equation       (InputData* input_data, EquationNode** node);
+static ErrorCode get_id             (InputData* input_data, EquationNode** node);
+static ErrorCode get_primary        (InputData* input_data, EquationNode** node, Variables* vars);
+static ErrorCode get_pow            (InputData* input_data, EquationNode** node, Variables* vars);
+static ErrorCode get_mul            (InputData* input_data, EquationNode** node, Variables* vars);
+static ErrorCode get_equation       (InputData* input_data, EquationNode** node, Variables* vars);
 
 ErrorCode equation_get_val_vars(Equation* equation)
 {
@@ -41,7 +42,7 @@ ErrorCode equation_get_val_vars(Equation* equation)
     }
                 
     for (size_t i = 0; i < equation->variables->count; i++)
-        get_var(equation->variables, i);
+        input_var(equation->variables, i);
 
     printf(print_lcyan("All variables have value\n"));
 
@@ -104,7 +105,7 @@ ErrorCode equation_read(Equation* equation, InputData* input_data)
     return ERROR_NO;
 }
 
-ErrorCode get_var(Variables* vars, size_t number_var)
+ErrorCode input_var(Variables* vars, size_t number_var)
 {
     assert(vars);
     ErrorCode err = ERROR_NO;
@@ -138,7 +139,7 @@ static ErrorCode equation_read_(EquationNode** node, Variables* vars,
 
     ErrorCode err = ERROR_NO;
 
-    err = get_equation(input_data, node);
+    err = get_equation(input_data, node, vars);
     if (err) return err;
     skip_spaces_buf(input_data);
 
@@ -301,43 +302,90 @@ static ErrorCode get_number(InputData* input_data, EquationNode** node)
     return err;
 }
 
-static ErrorCode get_primary(InputData* input_data, EquationNode** node)
+static ErrorCode get_id(InputData* input_data, char** id)
+{
+    assert(input_data);
+
+    ErrorCode err = ERROR_NO;
+    skip_spaces_buf(input_data);
+    *id = (char*)calloc(MAX_SIZE_INPUT, sizeof(char));
+    if(!(*id)) return ERROR_ALLOC_FAIL;
+
+    int ind = 0;
+    while (!isspace(input_data->buf[input_data->index])) {
+        (*id)[ind] = input_data->buf[input_data->index];
+        input_data->index++;
+        ind++;
+    }
+
+    skip_spaces_buf(input_data);
+    return err;
+}
+
+static ErrorCode get_primary(InputData* input_data, EquationNode** node, Variables* vars)
 {
     ErrorCode err = ERROR_NO;
     skip_spaces_buf(input_data);
+
+    int start_index = input_data->index;
+    char *id = nullptr;
+    err = get_id(input_data, &id);
+    if (err) return err;
+
     if (input_data->buf[input_data->index] == '(') {
         input_data->index++;
-        err = get_equation(input_data, node);
+        err = get_equation(input_data, node, vars);
         if (err) return err;
         skip_spaces_buf(input_data);
         input_data->index++;
+
+        for (int i = 0; i < COUNT_OPs; i++) {
+            if (strcmp(id, OPERATORS[i].name) == 0) {
+                EquationNode* node_copy_ = nullptr;
+                err = node_copy(*node, &node_copy_);
+                if (err) return err;
+                err = node_insert_op(node, OPERATORS[i].type_op, node_copy_, nullptr);
+                if (err) return err;
+                node_delete(&node_copy_);
+                free(id);
+                return err;
+            }
+        }
+
         for (EquationNode* np = *node; np; np = np->parent) {
             size_t depth = 0;
             err = node_get_depth(np, &depth);
             if (err) return err;
             np->depth = depth;
         }
+        free(id);
         return err;
     }
+
+    input_data->index = start_index;
+
     for (EquationNode* np = *node; np; np = np->parent) {
         size_t depth = 0;
         err = node_get_depth(np, &depth);
         if (err) return err;
         np->depth = depth;
     }
-    return get_number(input_data, node);
+    err = get_number(input_data, node);
+
+    free(id);
+    return err;
 }
 
-static ErrorCode get_pow(InputData* input_data, EquationNode** node)
+static ErrorCode get_pow(InputData* input_data, EquationNode** node, Variables* vars)
 {
     skip_spaces_buf(input_data);
-    ErrorCode err = get_primary(input_data, node);
+    ErrorCode err = get_primary(input_data, node, vars);
     if (err) return err;
     skip_spaces_buf(input_data);
     while (input_data->buf[input_data->index] == '^') {
         input_data->index++;
         EquationNode* node_right = nullptr;
-        err = get_primary(input_data, &node_right);
+        err = get_primary(input_data, &node_right, vars);
         if (err) return err;
         EquationNode* node_left = nullptr;
         err = node_copy(*node, &node_left);
@@ -359,10 +407,10 @@ static ErrorCode get_pow(InputData* input_data, EquationNode** node)
     return ERROR_NO;
 }
 
-static ErrorCode get_mul(InputData* input_data, EquationNode** node)
+static ErrorCode get_mul(InputData* input_data, EquationNode** node, Variables* vars)
 {
     skip_spaces_buf(input_data);
-    ErrorCode err = get_pow(input_data, node);
+    ErrorCode err = get_pow(input_data, node, vars);
     if (err) return err;
     skip_spaces_buf(input_data);
     while (input_data->buf[input_data->index] == '*' || input_data->buf[input_data->index] == '/') {
@@ -370,7 +418,7 @@ static ErrorCode get_mul(InputData* input_data, EquationNode** node)
         input_data->index++;
         skip_spaces_buf(input_data);
         EquationNode* node_right = nullptr;
-        err = get_pow(input_data, &node_right);
+        err = get_pow(input_data, &node_right, vars);
         if (err) return err;
         EquationNode* node_left = nullptr;
         err = node_copy(*node, &node_left);
@@ -400,10 +448,10 @@ static ErrorCode get_mul(InputData* input_data, EquationNode** node)
     return ERROR_NO;
 }
 
-static ErrorCode get_equation(InputData* input_data, EquationNode** node)
+static ErrorCode get_equation(InputData* input_data, EquationNode** node, Variables* vars)
 {
     skip_spaces_buf(input_data);
-    ErrorCode err = get_mul(input_data, node);
+    ErrorCode err = get_mul(input_data, node, vars);
     if (err) return err;
     skip_spaces_buf(input_data);
     while (input_data->buf[input_data->index] == '+' || input_data->buf[input_data->index] == '-') {
@@ -411,7 +459,7 @@ static ErrorCode get_equation(InputData* input_data, EquationNode** node)
         input_data->index++;
         skip_spaces_buf(input_data);
         EquationNode* node_right = nullptr;
-        err = get_mul(input_data, &node_right);
+        err = get_mul(input_data, &node_right, vars);
         if (err) return err;
         EquationNode* node_left = nullptr;
         err = node_copy(*node, &node_left);
