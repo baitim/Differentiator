@@ -21,11 +21,16 @@ static void skip_spaces_buf         (InputData* input_data);
 static char* skip_word              (char* str);
 static ErrorCode vars_increase_cap  (Variables* vars);
 static ErrorCode get_number         (InputData* input_data, EquationNode** node);
-static ErrorCode get_id             (InputData* input_data, EquationNode** node);
+static ErrorCode get_id             (InputData* input_data, char** id);
 static ErrorCode get_primary        (InputData* input_data, EquationNode** node, Variables* vars);
 static ErrorCode get_pow            (InputData* input_data, EquationNode** node, Variables* vars);
 static ErrorCode get_mul            (InputData* input_data, EquationNode** node, Variables* vars);
 static ErrorCode get_equation       (InputData* input_data, EquationNode** node, Variables* vars);
+static ErrorCode is_operator        (char* str, int* is_oper);
+static ErrorCode is_number          (char* str, int* is_num);
+static ErrorCode is_variable        (char* str, int* is_var);
+static ErrorCode check_type_arg     (char* str, EquationDataType* type_arg);
+static ErrorCode write_var          (EquationNode* node, Variables* vars, char* str);
 
 ErrorCode equation_get_val_vars(Equation* equation)
 {
@@ -277,13 +282,95 @@ static char* skip_word(char* str)
     return str;
 }
 
+static ErrorCode is_operator(char* str, int* is_oper)
+{
+    for (int i = 0; i < COUNT_OPs; i++) {
+        if (strcmp(OPERATORS[i].name, str) == 0) {
+            (*is_oper) = 1;
+            break;
+        }
+    }
+    
+    return ERROR_NO;
+}
+
+static ErrorCode is_number(char* str, int* is_num)
+{
+    int i = 0;
+    int count_dot = 0;
+    int count_minus = 0;
+    while (str[i] != '\0' && !isspace(str[i])) {
+        if (str[i] == '-') {
+            count_minus = i;
+        } else if (str[i] == '.') {
+            count_dot++;
+        } else if (str[i] < '0' || str[i] > '9') {
+            (*is_num) = 0;
+            return ERROR_NO;
+        }
+        if (count_dot > 1 || (count_dot == 1 && i == 0) || count_minus > 0)
+            return ERROR_READ_INPUT;
+        i++;
+    }
+    (*is_num) = 1;
+
+    return ERROR_NO;
+}
+
+static ErrorCode is_variable(char* str, int* is_var)
+{
+    int i = 0;
+    while (str[i] != '\0' && !isspace(str[i])) {
+        for (int j = 0; j < (int)sizeof(BANNED_SYMBOLS); j++) {
+            if (str[i] == BANNED_SYMBOLS[j]) {
+                (*is_var) = 0;
+                return ERROR_INPUT_VARIABLE;
+            }
+        }
+        i++;
+    }
+    (*is_var) = 1;
+
+    return ERROR_NO;
+}
+
+static ErrorCode check_type_arg(char* str, EquationDataType* type_arg)
+{
+    assert(str);
+    ErrorCode err = ERROR_NO;
+    int is_oper = 0;
+    err = is_operator(str, &is_oper);
+    if (err) return err;
+    if (is_oper) {
+        (*type_arg) = TYPE_OP;
+        return ERROR_NO;
+    }
+    int is_num =  0;
+    err = is_number(str, &is_num);
+    if (err) return err;
+    if (is_num) {
+        (*type_arg) = TYPE_NUM;
+        return ERROR_NO;
+    }
+    int is_var =  0;
+    err = is_variable(str, &is_var);
+    if (err) return err;
+    if (is_var) {
+        (*type_arg) = TYPE_VAR;
+        return ERROR_NO;
+    }
+
+    (*type_arg) = TYPE_ERR;
+    return ERROR_INPUT_VARIABLE;
+}
+
 static ErrorCode get_number(InputData* input_data, EquationNode** node)
 {
     ErrorCode err = ERROR_NO;
     skip_spaces_buf(input_data);
     double z = 1;
     double val = 0;
-    if (input_data->buf[input_data->index] == '-') z = -1;
+    if (input_data->buf[input_data->index] == '-') { z = -1; input_data->index++; }
     while (input_data->buf[input_data->index] >= '0' && input_data->buf[input_data->index] <= '9') {
         val = val * 10 + input_data->buf[input_data->index] - '0';
         input_data->index++;
@@ -312,7 +399,9 @@ static ErrorCode get_id(InputData* input_data, char** id)
     if(!(*id)) return ERROR_ALLOC_FAIL;
 
     int ind = 0;
-    while (!isspace(input_data->buf[input_data->index])) {
+    while (!isspace(input_data->buf[input_data->index]) && 
+           input_data->buf[input_data->index] != ')'    &&
+           input_data->buf[input_data->index] != '(') {
         (*id)[ind] = input_data->buf[input_data->index];
         input_data->index++;
         ind++;
@@ -320,6 +409,34 @@ static ErrorCode get_id(InputData* input_data, char** id)
 
     skip_spaces_buf(input_data);
     return err;
+}
+
+static ErrorCode write_var(EquationNode* node, Variables* vars, char* str)
+{
+    ErrorCode err = ERROR_NO;
+
+    node->type_value = TYPE_VAR;
+
+    int was = 0;
+    for (size_t i = 0; i < vars->count; i++) {
+        if (strcmp(vars->var[i].name, str) == 0) {
+            node->value = (int)i;
+            was = 1;
+            break;
+        }
+    }
+    if (!was) {
+        node->value = (int)vars->count;
+        vars->var[vars->count].name = strdup(str);
+        if (!vars->var[vars->count].name) return ERROR_STRDUP;
+        vars->count++;
+        if (vars->count >= vars->capacity - 1) {
+            err = vars_increase_cap(vars);
+            if (err) return err;
+        }
+    }
+
+    return ERROR_NO;
 }
 
 static ErrorCode get_primary(InputData* input_data, EquationNode** node, Variables* vars)
@@ -331,6 +448,25 @@ static ErrorCode get_primary(InputData* input_data, EquationNode** node, Variabl
     char *id = nullptr;
     err = get_id(input_data, &id);
     if (err) return err;
+
+    EquationDataType type_arg = TYPE_ERR;
+    err = check_type_arg(id, &type_arg);
+    if (err || type_arg == TYPE_ERR) return err;
+
+    if (type_arg == TYPE_VAR) {
+        err = node_init(node);
+        if (err) return err;
+        err = write_var(*node, vars, id);
+        if (err) return err;
+        free(id);
+        for (EquationNode* np = *node; np; np = np->parent) {
+            size_t depth = 0;
+            err = node_get_depth(np, &depth);
+            if (err) return err;
+            np->depth = depth;
+        }
+        return err;
+    }
 
     if (input_data->buf[input_data->index] == '(') {
         input_data->index++;
